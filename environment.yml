@@ -1,0 +1,10 @@
+name: spatial_sites_env
+dependencies:
+- python>=3.5
+- pip
+- pylint
+- ipykernel
+- rope
+- autopep8
+- twine
+- wheel
