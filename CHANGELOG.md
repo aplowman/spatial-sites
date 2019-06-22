@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.1.0] - xxxx.xx.xx
+## [0.1.0] - 2019.06.22
 
 ### Added
 
