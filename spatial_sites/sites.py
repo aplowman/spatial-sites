@@ -312,6 +312,32 @@ class Sites(object):
 
             return match_label, match_val
 
+    def _validate_trans_vector(self, vector):
+        """Validate that an input vector is suitable for translation.
+
+        Parameters
+        ---------
+        vector : list or ndarray
+
+        Returns
+        -------
+        ndarray of shape (self.dimension, 1)
+
+        """
+
+        if not isinstance(vector, np.ndarray):
+            vector = np.array(vector)
+
+        if len(vector.shape) > 1:
+            vector = np.squeeze(vector)
+
+        if vector.shape != (self.dimension, ):
+            msg = ('Cannot translate coordinates with dimension {} by a '
+                   'vector with shape {}.')
+            raise ValueError(msg.format(self.dimension, vector.shape))
+
+        return vector[:, None]
+
     @property
     def labels(self):
         return self._labels
@@ -338,32 +364,6 @@ class Sites(object):
     def copy(self):
         """Make a copy of the Sites object."""
         return self.__copy__()
-
-    def _validate_trans_vector(self, vector):
-        """Validate that an input vector is suitable for translation.
-
-        Parameters
-        ---------
-        vector : list or ndarray
-
-        Returns
-        -------
-        ndarray of shape (self.dimension, 1)
-
-        """
-
-        if not isinstance(vector, np.ndarray):
-            vector = np.array(vector)
-
-        if len(vector.shape) > 1:
-            vector = np.squeeze(vector)
-
-        if vector.shape != (self.dimension, ):
-            msg = ('Cannot translate coordinates with dimension {} by a '
-                   'vector with shape {}.')
-            raise ValueError(msg.format(self.dimension, vector.shape))
-
-        return vector[:, None]
 
     def translate(self, vector):
         """Translate the coordinates by a vector.
