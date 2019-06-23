@@ -305,3 +305,24 @@ class Sites(object):
             sites_frac = sites_frac.T
 
         return sites_frac
+
+    def get_plot_data(self, group_by=None):
+
+        data = {
+            'x': self._sites[0],
+            'type': 'scatter',
+            'mode': 'markers',
+        }
+
+        if self.dimension > 1:
+            data.update({
+                'y': self._sites[1],
+            })
+
+        if self.dimension > 2:
+            data.update({
+                'z': self._sites[2],
+                'type': 'scatter3d',
+            })
+
+        return data
