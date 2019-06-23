@@ -4,8 +4,10 @@ Module defining a Sites class that represents a set of points in space.
 
 """
 
+import numbers
 import warnings
 import re
+import copy
 
 import numpy as np
 
@@ -91,6 +93,14 @@ class SitesLabel(object):
     def __len__(self):
         return len(self.values)
 
+    def __copy__(self):
+        out = SitesLabel(
+            name=self.name,
+            unique_values=np.copy(self.unique_values),
+            values_idx=np.copy(self.values_idx)
+        )
+        return out
+
     def _validate_name(self, name):
         """Ensure name is safe to use as an object attribute."""
         pattern = r'^(?![0-9])[a-zA-Z0-9_]+$'
@@ -109,7 +119,7 @@ class Sites(object):
     sites : ndarray
     dimension : int
     vector_direction : str
-    labels : dict
+    labels : dict of (str : (dict or SitesLabel))
 
     """
 
@@ -134,6 +144,66 @@ class Sites(object):
     def __len__(self):
         """Get how many sites there are in this Sites objects."""
         return self._sites.shape[1]
+
+    def __copy__(self):
+        out = Sites(
+            sites=np.copy(self.sites),
+            vector_direction=self.vector_direction,
+            labels=copy.deepcopy(self.labels),
+            dimension=self.dimension,
+        )
+        return out
+
+    def __add__(self, obj):
+
+        if isinstance(obj, type(self)):
+            # TODO: Concatenate sites
+            pass
+        else:
+            out = self.copy()
+            out._sites += self._validate_vector(obj)
+
+        return out
+
+    def __radd__(self, obj):
+
+        if isinstance(obj, type(self)):
+            # TODO: Concatenate sites
+            pass
+        else:
+            out = self.__add__(obj)
+
+        return out
+
+    def __iadd__(self, obj):
+
+        if isinstance(obj, type(self)):
+            # TODO: Concatenate sites
+            pass
+        else:
+            self._sites += self._validate_vector(obj)
+
+        return self
+
+    def __sub__(self, vector):
+
+        out = self.copy()
+        out._sites -= self._validate_vector(vector)
+
+        return out
+
+    def __rsub__(self, vector):
+
+        out = self.copy()
+        out._sites = self._validate_vector(vector) - out._sites
+
+        return out
+
+    def __isub__(self, vector):
+
+        self._sites -= self._validate_vector(vector)
+
+        return self
 
     def _init_labels(self, labels):
         """Set labels as attributes for easy access."""
@@ -264,6 +334,41 @@ class Sites(object):
     @vector_direction.setter
     def vector_direction(self, vector_direction):
         vector_direction_setter(self, vector_direction)
+
+    def copy(self):
+        """Make a copy of the Sites object."""
+        return self.__copy__()
+
+    def _validate_vector(self, vector):
+
+        if not isinstance(vector, np.ndarray):
+            vector = np.array(vector)
+
+        if len(vector.shape) > 1:
+            vector = np.squeeze(vector)
+
+        if vector.shape != (self.dimension, ):
+            msg = ('Cannot translate coordinates with dimension {} by a '
+                   'vector with shape {}.')
+            raise ValueError(msg.format(self.dimension, vector.shape))
+
+        return vector[:, None]
+
+    def translate(self, vector):
+        """Translate the coordinates by a vector.
+
+        Parameters
+        ----------
+        vector : list of ndarray
+            The vector must have the same dimension as the Sites object.
+
+        Returns
+        -------
+        self
+
+        """
+
+        self.__iadd__(vector)
 
     def index(self, **kwargs):
         """Filter site indices by a label with a particular value."""
