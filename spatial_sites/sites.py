@@ -141,29 +141,33 @@ class Sites(object):
         label_objs = {}
         for k, v in (labels or {}).items():
 
-            msg = ('Specify site labels as either a single list/tuple of '
-                   'values, or as a list/tuple of length two, whose first '
-                   'element is a list/tuple of unique values, and whose '
-                   'second element is a list/tuple of indices that index the '
-                   'first element.')
-            values = None
-            unique_values = None
-            values_idx = None
+            if isinstance(v, SitesLabel):
+                sites_label = v
 
-            if isinstance(v[0], (np.ndarray, list, tuple)):
-                if len(v) == 2:
-                    unique_values, values_idx = v
-                else:
-                    raise ValueError(msg)
             else:
-                values = v
+                msg = ('Specify site labels as either a single list/tuple of '
+                       'values, or as a list/tuple of length two, whose first '
+                       'element is a list/tuple of unique values, and whose '
+                       'second element is a list/tuple of indices that index '
+                       'the first element.')
+                values = None
+                unique_values = None
+                values_idx = None
 
-            sites_label = SitesLabel(
-                k,
-                values=values,
-                unique_values=unique_values,
-                values_idx=values_idx
-            )
+                if isinstance(v[0], (np.ndarray, list, tuple)):
+                    if len(v) == 2:
+                        unique_values, values_idx = v
+                    else:
+                        raise ValueError(msg)
+                else:
+                    values = v
+
+                sites_label = SitesLabel(
+                    k,
+                    values=values,
+                    unique_values=unique_values,
+                    values_idx=values_idx
+                )
 
             msg = ('Length of site labels named "{}" ({}) does not match '
                    'the number of sites ({}).')
