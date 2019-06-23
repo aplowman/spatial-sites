@@ -14,13 +14,15 @@ from spatial_sites.utils import check_indices
 
 def vector_direction_setter(obj, vector_direction):
 
-    if vector_direction not in ['row', 'column', 'col']:
+    if vector_direction not in ['row', 'r', 'column', 'col', 'c']:
         msg = ('`vector_direction` must be specified as a string, either '
-               '"row" or "column" (or "col").')
+               '"row" (or "r") or "column" (or "col" or "c").')
         raise ValueError(msg)
 
-    if vector_direction == 'col':
+    if vector_direction in ['col', 'c']:
         vector_direction = 'column'
+    elif vector_direction == 'r':
+        vector_direction = 'row'
 
     old_vec_dir = getattr(obj, '_vector_direction', None)
     if old_vec_dir:
