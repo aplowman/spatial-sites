@@ -161,7 +161,7 @@ class Sites(object):
             pass
         else:
             out = self.copy()
-            out._sites += self._validate_vector(obj)
+            out._sites += self._validate_trans_vector(obj)
 
         return out
 
@@ -181,27 +181,27 @@ class Sites(object):
             # TODO: Concatenate sites
             pass
         else:
-            self._sites += self._validate_vector(obj)
+            self._sites += self._validate_trans_vector(obj)
 
         return self
 
     def __sub__(self, vector):
 
         out = self.copy()
-        out._sites -= self._validate_vector(vector)
+        out._sites -= self._validate_trans_vector(vector)
 
         return out
 
     def __rsub__(self, vector):
 
         out = self.copy()
-        out._sites = self._validate_vector(vector) - out._sites
+        out._sites = self._validate_trans_vector(vector) - out._sites
 
         return out
 
     def __isub__(self, vector):
 
-        self._sites -= self._validate_vector(vector)
+        self._sites -= self._validate_trans_vector(vector)
 
         return self
 
@@ -339,7 +339,18 @@ class Sites(object):
         """Make a copy of the Sites object."""
         return self.__copy__()
 
-    def _validate_vector(self, vector):
+    def _validate_trans_vector(self, vector):
+        """Validate that an input vector is suitable for translation.
+
+        Parameters
+        ---------
+        vector : list or ndarray
+
+        Returns
+        -------
+        ndarray of shape (self.dimension, 1)
+
+        """
 
         if not isinstance(vector, np.ndarray):
             vector = np.array(vector)
