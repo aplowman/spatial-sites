@@ -226,6 +226,7 @@ class Sites(object):
 
                 if isinstance(v[0], (np.ndarray, list, tuple)):
                 if len(v) == 2:
+                    if isinstance(v[0], (np.ndarray, list, tuple)):
                         unique_values, values_idx = v
                     else:
                         raise ValueError(msg)
