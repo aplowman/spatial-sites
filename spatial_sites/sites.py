@@ -52,16 +52,16 @@ class SitesLabel(object):
         args = [values, unique_values, values_idx]
         msg = ('Specify either `values` or both `unique_values` and '
                '`values_idx`')
-        if all([i for i in args]) or all([not i for i in args]):
+        if all([i is not None for i in args]) or all([i is None for i in args]):
             raise ValueError(msg)
 
-        if values and not isinstance(values, np.ndarray):
+        if values is not None and not isinstance(values, np.ndarray):
             values = np.array(values)
 
-        if unique_values and not isinstance(unique_values, np.ndarray):
+        if unique_values is not None and not isinstance(unique_values, np.ndarray):
             unique_values = np.array(unique_values)
 
-        if values_idx and not isinstance(values_idx, np.ndarray):
+        if values_idx is not None and not isinstance(values_idx, np.ndarray):
             values_idx = np.array(values_idx)
 
         if values is not None:
