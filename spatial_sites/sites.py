@@ -156,11 +156,10 @@ class Sites(object):
 
     def __add__(self, obj):
 
-        if isinstance(obj, type(self)):
-            # TODO: Concatenate sites
-            pass
+        out = self.copy()
+        if isinstance(obj, Sites):
+            out += obj
         else:
-            out = self.copy()
             out._sites += self._validate_trans_vector(obj)
 
         return out
@@ -177,10 +176,28 @@ class Sites(object):
 
     def __iadd__(self, obj):
 
-        if isinstance(obj, type(self)):
-            # TODO: Concatenate sites
-            pass
+        if isinstance(obj, Sites):
+            # Concatenate sites:
+            self._validate_concat(self, obj)
+
+            new_labs = {}
+            for lab_name, sites_lab in self.labels.items():
+
+                new_lab_vals = np.hstack([sites_lab.values,
+                                          obj.labels[lab_name].values])
+
+                sites_lab_new = SitesLabel(name=lab_name, values=new_lab_vals)
+                new_labs.update({
+                    lab_name: sites_lab_new,
+                })
+                super().__setattr__(lab_name, sites_lab_new.values)
+
+            new_sites = np.hstack([self._sites, obj._sites])
+            self._sites = new_sites
+            self._labels = new_labs
+
         else:
+            # Add a translation vector:
             self._sites += self._validate_trans_vector(obj)
 
         return self
@@ -338,6 +355,54 @@ class Sites(object):
 
         return vector[:, None]
 
+    @staticmethod
+    def _validate_concat(*args):
+        """Validate two or more Sites objects are compatible for concatenation.
+
+        args : Sites objects
+
+        """
+
+        if len(args) < 2:
+            msg = ('At least two `Sites` objects must be supplied.')
+            raise ValueError(msg)
+
+        labs = {
+            k: v.dtype
+            for k, v in args[0].labels.items()
+        }
+        dim = args[0].dimension
+        vec_dir = args[0].vector_direction
+
+        for i in args[1:]:
+
+            # Check for same `dimension`s
+            if i.dimension != dim:
+                msg = ('Incompatible `Sites` objects: inconsistent '
+                       '`dimension`s.')
+                raise ValueError(msg)
+
+            # Check for same `vector_direction`s:
+            if i.vector_direction != vec_dir:
+                msg = ('Incompatible `Sites` objects: inconsistent '
+                       '`vector_direction`s.')
+                raise ValueError(msg)
+
+            labs_i = i.labels
+
+            # Check for same label `name`s:
+            if not (set(labs.keys()) | set(labs_i.keys())) == set(labs_i.keys()):
+                msg = 'Incompatible `Sites` objects: different labels exist.'
+                raise ValueError(msg)
+
+            # Check for same `dtype`s:
+            for k, v in labs_i.items():
+                if not (np.can_cast(labs[k], v.dtype) or
+                        np.can_cast(v.dtype, labs[k])):
+                    msg = ('Incompatible `Sites` objects: labels named "{}" '
+                           'have distinct `dtype`s: {} and {}')
+                    raise ValueError(msg.format(k, labs[k], v.dtype))
+
     @property
     def labels(self):
         return self._labels
@@ -360,6 +425,15 @@ class Sites(object):
     @vector_direction.setter
     def vector_direction(self, vector_direction):
         vector_direction_setter(self, vector_direction)
+
+    @staticmethod
+    def concatenate(sites):
+        """"""
+        out = sites[0].copy()
+        for i in sites[1:]:
+            out += i
+
+        return out
 
     def copy(self):
         """Make a copy of the Sites object."""
