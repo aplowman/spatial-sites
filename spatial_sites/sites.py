@@ -396,7 +396,7 @@ class Sites(object):
                 if not (np.can_cast(labs[k], v.dtype) or
                         np.can_cast(v.dtype, labs[k])):
                     msg = ('Incompatible `Sites` objects: labels named "{}" '
-                           'have distinct `dtype`s: {} and {}')
+                           'have uncastable `dtype`s: {} and {}')
                     raise ValueError(msg.format(k, labs[k], v.dtype))
 
     @property
