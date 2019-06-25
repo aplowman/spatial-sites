@@ -166,13 +166,9 @@ class Sites(object):
 
     def __radd__(self, obj):
 
-        if isinstance(obj, type(self)):
-            # TODO: Concatenate sites
-            pass
-        else:
+        if not isinstance(obj, type(self)):
             out = self.__add__(obj)
-
-        return out
+            return out
 
     def __iadd__(self, obj):
 
