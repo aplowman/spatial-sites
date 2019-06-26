@@ -148,6 +148,16 @@ class Sites(object):
         """Get how many sites there are in this Sites objects."""
         return self._sites.shape[1]
 
+    def __eq__(self, other):
+
+        # TODO: add check of same class; add something to do with hash?
+
+        # Check sites equal:
+        pass
+
+        # Check labels equal:
+        pass
+
     def __copy__(self):
         out = Sites(
             sites=np.copy(self.sites),
