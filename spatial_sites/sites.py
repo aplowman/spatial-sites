@@ -116,7 +116,7 @@ class Sites(object):
 
     Attributes
     ----------
-    sites : ndarray
+    coords : ndarray
     dimension : int
     vector_direction : str
     labels : dict of (str : (dict or SitesLabel))
@@ -126,11 +126,11 @@ class Sites(object):
     # Prioritise our `__rmatmul__` over Numpy's `__matmul__`:
     __array_priority__ = 1
 
-    def __init__(self, sites, labels=None, vector_direction='column',
+    def __init__(self, coords, labels=None, vector_direction='column',
                  dimension=3):
 
         self.vector_direction = vector_direction
-        self._sites = self._validate(sites, self.vector_direction, dimension)
+        self._coords = self._validate(coords, self.vector_direction, dimension)
         self._dimension = dimension
         self._labels = self._init_labels(labels)
 
@@ -145,14 +145,14 @@ class Sites(object):
         super().__setattr__(name, value)
 
     def __len__(self):
-        """Get how many sites there are in this Sites objects."""
-        return self._sites.shape[1]
+        """Get how many coords there are in this Sites objects."""
+        return self._coords.shape[1]
 
     def __eq__(self, other):
 
         # TODO: add check of same class; add something to do with hash?
 
-        # Check sites equal:
+        # Check coords equal:
         pass
 
         # Check labels equal:
@@ -160,7 +160,7 @@ class Sites(object):
 
     def __copy__(self):
         out = Sites(
-            sites=np.copy(self.sites),
+            coords=np.copy(self.coords),
             vector_direction=self.vector_direction,
             labels=copy.deepcopy(self.labels),
             dimension=self.dimension,
@@ -173,7 +173,7 @@ class Sites(object):
         if isinstance(obj, Sites):
             out += obj
         else:
-            out._sites += self._validate_translation_vector(obj)
+            out._coords += self._validate_translation_vector(obj)
 
         return out
 
@@ -201,33 +201,33 @@ class Sites(object):
                 })
                 super().__setattr__(lab_name, sites_lab_new.values)
 
-            new_sites = np.hstack([self._sites, obj._sites])
-            self._sites = new_sites
+            new_sites = np.hstack([self._coords, obj._coords])
+            self._coords = new_sites
             self._labels = new_labs
 
         else:
             # Add a translation vector:
-            self._sites += self._validate_translation_vector(obj)
+            self._coords += self._validate_translation_vector(obj)
 
         return self
 
     def __sub__(self, vector):
 
         out = self.copy()
-        out._sites -= self._validate_translation_vector(vector)
+        out._coords -= self._validate_translation_vector(vector)
 
         return out
 
     def __rsub__(self, vector):
 
         out = self.copy()
-        out._sites = self._validate_translation_vector(vector) - out._sites
+        out._coords = self._validate_translation_vector(vector) - out._coords
 
         return out
 
     def __isub__(self, vector):
 
-        self._sites -= self._validate_translation_vector(vector)
+        self._coords -= self._validate_translation_vector(vector)
 
         return self
 
@@ -243,7 +243,7 @@ class Sites(object):
     def __imul__(self, number):
         """Scale coordinates by a scalar."""
         if isinstance(number, numbers.Number):
-            self._sites *= number
+            self._coords *= number
             return self
 
     def __truediv__(self, number):
@@ -255,7 +255,7 @@ class Sites(object):
     def __itruediv__(self, number):
         """Scale coordinates by a scalar."""
         if isinstance(number, numbers.Number):
-            self._sites /= number
+            self._coords /= number
             return self
 
     def __matmul__(self, mat):
@@ -275,7 +275,7 @@ class Sites(object):
 
         mat = self._validate_transformation_matrix(mat)
         out = self.copy()
-        out._sites = mat @ self._sites
+        out._coords = mat @ self._coords
         return out
 
     def __imatmul__(self, mat):
@@ -287,7 +287,7 @@ class Sites(object):
             raise ValueError(msg)
 
         mat = self._validate_transformation_matrix(mat)
-        self._sites = mat.T @ self._sites
+        self._coords = mat.T @ self._coords
 
         return self
 
@@ -336,24 +336,24 @@ class Sites(object):
 
         return label_objs
 
-    def _validate(self, sites, vector_direction, dimension):
+    def _validate(self, coords, vector_direction, dimension):
         """Validate inputs."""
 
         if dimension not in [2, 3]:
             msg = '`dimension` must be an integer: 2 or 3.'
             raise ValueError(msg)
 
-        if not isinstance(sites, np.ndarray):
-            sites = np.array(sites)
+        if not isinstance(coords, np.ndarray):
+            coords = np.array(coords)
 
-        if sites.ndim != 2:
-            raise ValueError('`sites` must be a 2D array.')
+        if coords.ndim != 2:
+            raise ValueError('`coords` must be a 2D array.')
 
         vec_len_idx = 0 if vector_direction == 'column' else 1
-        vec_len = sites.shape[vec_len_idx]
+        vec_len = coords.shape[vec_len_idx]
 
         if vec_len != dimension:
-            msg = ('The length of {}s in `sites` ({}) must be equal to '
+            msg = ('The length of {}s in `coords` ({}) must be equal to '
                    '`dimension` ({}). Change `vector_direction` to "{}" if '
                    'you would like an individual site to be represented as '
                    'a {}-vector')
@@ -369,9 +369,9 @@ class Sites(object):
             )
 
         if self.vector_direction == 'row':
-            return sites.T
+            return coords.T
         else:
-            return sites
+            return coords
 
     def _validate_label_filter(self, **kwargs):
         """Validation for the `index` method."""
@@ -509,11 +509,11 @@ class Sites(object):
         return self._dimension
 
     @property
-    def sites(self):
+    def coords(self):
         if self.vector_direction == 'column':
-            return self._sites
+            return self._coords
         else:
-            return self._sites.T
+            return self._coords.T
 
     @property
     def vector_direction(self):
@@ -565,7 +565,7 @@ class Sites(object):
         """Filter sites by a label with a particular value."""
 
         match_idx = self.index(**kwargs)
-        match_sites = self._sites[:, match_idx]
+        match_sites = self._coords[:, match_idx]
 
         if self.vector_direction == 'row':
             match_sites = match_sites.T
@@ -573,7 +573,7 @@ class Sites(object):
         return match_sites
 
     def as_fractional(self, unit_cell):
-        """Get sites in fractional units of a given unit cell.
+        """Get coords in fractional units of a given unit cell.
 
         Parameters
         ----------
@@ -586,7 +586,7 @@ class Sites(object):
             unit_cell = unit_cell.T
 
         unit_cell_inv = np.linalg.inv(unit_cell)
-        sites_frac = np.dot(unit_cell_inv, self._sites)
+        sites_frac = np.dot(unit_cell_inv, self._coords)
 
         if self.vector_direction == 'row':
             sites_frac = sites_frac.T
@@ -596,19 +596,19 @@ class Sites(object):
     def get_plot_data(self, group_by=None):
 
         data = {
-            'x': self._sites[0],
+            'x': self._coords[0],
             'type': 'scatter',
             'mode': 'markers',
         }
 
         if self.dimension > 1:
             data.update({
-                'y': self._sites[1],
+                'y': self._coords[1],
             })
 
         if self.dimension > 2:
             data.update({
-                'z': self._sites[2],
+                'z': self._coords[2],
                 'type': 'scatter3d',
             })
 
