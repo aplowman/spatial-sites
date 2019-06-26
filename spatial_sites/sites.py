@@ -123,6 +123,9 @@ class Sites(object):
 
     """
 
+    # Prioritise our `__rmatmul__` over Numpy's `__matmul__`:
+    __array_priority__ = 1
+
     def __init__(self, sites, labels=None, vector_direction='column',
                  dimension=3):
 
@@ -227,23 +230,56 @@ class Sites(object):
     def __rmul__(self, number):
         return self.__mul__(number)
 
-    def __truediv__(self, number):
-        """Scale coordinates by a scalar."""
-        out = self.copy()
-        out /= number
-        return out
-
     def __imul__(self, number):
         """Scale coordinates by a scalar."""
         if isinstance(number, numbers.Number):
             self._sites *= number
             return self
 
+    def __truediv__(self, number):
+        """Scale coordinates by a scalar."""
+        out = self.copy()
+        out /= number
+        return out
+
     def __itruediv__(self, number):
         """Scale coordinates by a scalar."""
         if isinstance(number, numbers.Number):
             self._sites /= number
             return self
+
+    def __matmul__(self, mat):
+        """Transform site coordinates by a transformation matrix."""
+
+        out = self.copy()
+        out @= mat
+        return out
+
+    def __rmatmul__(self, mat):
+        """Transform site coordinates by a transformation matrix."""
+
+        if self.vector_direction != 'column':
+            msg = ('Cannot pre-multiply site coordinates by a transformation'
+                   ' matrix when `Sites.vector_direction` is "row".')
+            raise ValueError(msg)
+
+        mat = self._validate_transformation_matrix(mat)
+        out = self.copy()
+        out._sites = mat @ self._sites
+        return out
+
+    def __imatmul__(self, mat):
+        """Transform site coordinates by a transformation matrix."""
+
+        if self.vector_direction != 'row':
+            msg = ('Cannot post-multiply site coordinates by a transformation'
+                   ' matrix when `Sites.vector_direction` is "column".')
+            raise ValueError(msg)
+
+        mat = self._validate_transformation_matrix(mat)
+        self._sites = mat.T @ self._sites
+
+        return self
 
     def _init_labels(self, labels):
         """Set labels as attributes for easy access."""
@@ -377,6 +413,34 @@ class Sites(object):
             raise ValueError(msg.format(self.dimension, vector.shape))
 
         return vector[:, None]
+
+    def _validate_transformation_matrix(self, mat):
+        """Try to validate the shape of the matrix, as intended to transform
+        the site coordinates."""
+
+        msg_all = 'Transformation matrix invalid: '
+
+        if not isinstance(mat, np.ndarray):
+            mat = np.array(mat)
+
+        # must be 2D:
+        if len(mat.shape) != 2:
+            msg = msg_all + 'must be a 2D array.'
+            raise ValueError(msg)
+
+        # Assuming transformation does not change dimension, must be square:
+        if mat.shape[0] != mat.shape[1]:
+            msg = msg_all + ('must be a square matrix (dimension of '
+                             'coordinates must not change).')
+            raise ValueError(msg)
+
+        # Axis size must be equal to dimension of coordinates:
+        if mat.shape[0] != self.dimension:
+            msg = msg_all + ('axis size must be equal to dimension of '
+                             'coordinates ({})')
+            raise ValueError(msg.format(self.dimension))
+
+        return mat
 
     @staticmethod
     def _validate_concat(*sites):
