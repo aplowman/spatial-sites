@@ -352,25 +352,25 @@ class Sites(object):
         return vector[:, None]
 
     @staticmethod
-    def _validate_concat(*args):
+    def _validate_concat(*sites):
         """Validate two or more Sites objects are compatible for concatenation.
 
         args : Sites objects
 
         """
 
-        if len(args) < 2:
+        if len(sites) < 2:
             msg = ('At least two `Sites` objects must be supplied.')
             raise ValueError(msg)
 
         labs = {
             k: v.dtype
-            for k, v in args[0].labels.items()
+            for k, v in sites[0].labels.items()
         }
-        dim = args[0].dimension
-        vec_dir = args[0].vector_direction
+        dim = sites[0].dimension
+        vec_dir = sites[0].vector_direction
 
-        for i in args[1:]:
+        for i in sites[1:]:
 
             # Check for same `dimension`s
             if i.dimension != dim:
