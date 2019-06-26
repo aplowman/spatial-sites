@@ -218,6 +218,30 @@ class Sites(object):
 
         return self
 
+    def __mul__(self, number):
+        """Scale coordinates by a scalar."""
+        out = self.copy()
+        out *= number
+        return out
+
+    def __truediv__(self, number):
+        """Scale coordinates by a scalar."""
+        out = self.copy()
+        out /= number
+        return out
+
+    def __imul__(self, number):
+        """Scale coordinates by a scalar."""
+        if isinstance(number, numbers.Number):
+            self._sites *= number
+            return self
+
+    def __itruediv__(self, number):
+        """Scale coordinates by a scalar."""
+        if isinstance(number, numbers.Number):
+            self._sites /= number
+            return self
+
     def _init_labels(self, labels):
         """Set labels as attributes for easy access."""
 
