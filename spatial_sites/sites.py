@@ -224,6 +224,9 @@ class Sites(object):
         out *= number
         return out
 
+    def __rmul__(self, number):
+        return self.__mul__(number)
+
     def __truediv__(self, number):
         """Scale coordinates by a scalar."""
         out = self.copy()
