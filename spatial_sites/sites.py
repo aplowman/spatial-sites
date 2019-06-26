@@ -163,7 +163,7 @@ class Sites(object):
         if isinstance(obj, Sites):
             out += obj
         else:
-            out._sites += self._validate_trans_vector(obj)
+            out._sites += self._validate_translation_vector(obj)
 
         return out
 
@@ -197,27 +197,27 @@ class Sites(object):
 
         else:
             # Add a translation vector:
-            self._sites += self._validate_trans_vector(obj)
+            self._sites += self._validate_translation_vector(obj)
 
         return self
 
     def __sub__(self, vector):
 
         out = self.copy()
-        out._sites -= self._validate_trans_vector(vector)
+        out._sites -= self._validate_translation_vector(vector)
 
         return out
 
     def __rsub__(self, vector):
 
         out = self.copy()
-        out._sites = self._validate_trans_vector(vector) - out._sites
+        out._sites = self._validate_translation_vector(vector) - out._sites
 
         return out
 
     def __isub__(self, vector):
 
-        self._sites -= self._validate_trans_vector(vector)
+        self._sites -= self._validate_translation_vector(vector)
 
         return self
 
@@ -388,7 +388,7 @@ class Sites(object):
 
             return match_label, match_val
 
-    def _validate_trans_vector(self, vector):
+    def _validate_translation_vector(self, vector):
         """Validate that an input vector is suitable for translation.
 
         Parameters
