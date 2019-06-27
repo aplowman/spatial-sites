@@ -581,6 +581,14 @@ class Sites(object):
             for i in self._single_sites:
                 vector_direction_setter(i, vector_direction)
 
+    @property
+    def centroid(self):
+        """Get the geometric centre of the sites."""
+        avg = np.mean(self._coords, axis=1)
+        if self.vector_direction == 'column':
+            avg = avg[:, None]
+        return avg
+
     @staticmethod
     def concatenate(sites):
         """"""
