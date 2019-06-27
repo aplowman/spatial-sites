@@ -589,6 +589,19 @@ class Sites(object):
             avg = avg[:, None]
         return avg
 
+    @property
+    def bounding_box(self):
+        """Get the orthogonal bounding "box" minima and maxima."""
+
+        box = np.array([
+            np.min(self._coords, axis=1),
+            np.max(self._coords, axis=1)
+        ])
+        if self.vector_direction == 'column':
+            box = box.T
+
+        return box
+
     @staticmethod
     def concatenate(sites):
         """"""
