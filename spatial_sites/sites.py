@@ -193,6 +193,26 @@ class Sites(object):
 
         return True
 
+    def __lt__(self, other):
+        if self.__class__ != other.__class__:
+            return NotImplemented
+        return self.coords < other.coords
+
+    def __gt__(self, other):
+        if self.__class__ != other.__class__:
+            return NotImplemented
+        return self.coords > other.coords
+
+    def __le__(self, other):
+        if self.__class__ != other.__class__:
+            return NotImplemented
+        return self.coords <= other.coords
+
+    def __ge__(self, other):
+        if self.__class__ != other.__class__:
+            return NotImplemented
+        return self.coords >= other.coords
+
     def __copy__(self):
         out = Sites(
             coords=np.copy(self.coords),
