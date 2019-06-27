@@ -637,6 +637,12 @@ class SingleSite(Sites):
         self._vector_direction = sites.vector_direction
         self._dimension = sites.dimension
 
+    def __len__(self):
+        raise NotImplementedError
+
+    def __getitem__(self, index):
+        raise NotImplementedError
+
     def _init_labels(self):
         """Set labels as attributes for easy access."""
 
