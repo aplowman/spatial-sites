@@ -112,7 +112,7 @@ class SitesLabel(object):
 
 
 class Sites(object):
-    """Class to represent a set of points in space.
+    """An ordered set points in space with arbitrary labelling.
 
     Attributes
     ----------
@@ -134,6 +134,9 @@ class Sites(object):
         self._dimension = dimension
         self._labels = self._init_labels(labels)
 
+        self._single_sites = [SingleSite(sites=self, site_index=i)
+                              for i in range(len(self))]
+
     def __setattr__(self, name, value):
         """Overridden method to prevent reassigning label attributes."""
 
@@ -147,6 +150,9 @@ class Sites(object):
     def __len__(self):
         """Get how many coords there are in this Sites objects."""
         return self._coords.shape[1]
+
+    def __getitem__(self, index):
+        return self._single_sites[index]
 
     def __eq__(self, other):
 
@@ -522,6 +528,9 @@ class Sites(object):
     @vector_direction.setter
     def vector_direction(self, vector_direction):
         vector_direction_setter(self, vector_direction)
+        if hasattr(self, '_single_sites'):
+            for i in self._single_sites:
+                vector_direction_setter(i, vector_direction)
 
     @staticmethod
     def concatenate(sites):
@@ -613,3 +622,41 @@ class Sites(object):
             })
 
         return data
+
+
+class SingleSite(Sites):
+    """A single, labelled point in space."""
+
+    def __init__(self, sites, site_index):
+
+        self.sites = sites
+        self.site_index = site_index
+
+        self._coords = sites._coords[:, site_index][:, None]
+        self._labels = self._init_labels()
+        self._vector_direction = sites.vector_direction
+        self._dimension = sites.dimension
+
+    def _init_labels(self):
+        """Set labels as attributes for easy access."""
+
+        labels = {}
+        for k, v in self.sites._labels.items():
+
+            val = v.values[self.site_index]
+            sites_label = SitesLabel(
+                k,
+                values=np.array(val),
+            )
+            labels.update({
+                k: sites_label
+            })
+            setattr(self, k, val)
+
+        return labels
+
+    def whose(self, **kwargs):
+        raise NotImplementedError
+
+    def index(self, **kwargs):
+        raise NotImplementedError
