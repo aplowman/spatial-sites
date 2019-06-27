@@ -693,6 +693,33 @@ class Sites(object):
 
         return data
 
+    def rotate(self, mat, centre=None):
+        """Rotate the coordinates.
+
+        Parameters
+        ----------
+        mat : ndarray 
+            Rotation matrix to apply to the coordinates.
+        centre : ndarray of size 3, optional
+            Centre of rotation. If not specified, the Cartesian origin is used.
+
+        TODO: needs some testing.
+
+        """
+
+        if not centre:
+            centre = [0, 0, 0]
+
+        centre = self._validate_translation_vector(
+            centre)  # TODO rename this method
+
+        if self.vector_direction == 'row':
+            mat = mat.T
+
+        self.translate(-centre)
+        self = mat @ self
+        self.translate(centre)
+
 
 class SingleSite(Sites):
     """A single, labelled point in space."""
