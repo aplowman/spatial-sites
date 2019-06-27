@@ -93,6 +93,23 @@ class SitesLabel(object):
     def __len__(self):
         return len(self.values)
 
+    def __eq__(self, other):
+
+        if self.__class__ != other.__class__:
+            return False
+
+        if self.name != other.name:
+            return False
+
+        if self.values.dtype.kind == 'f':  # floating point data
+            if not np.allclose(self.values, other.values):
+                return False
+        else:
+            if not np.all(self.values == other.values):
+                return False
+
+        return True
+
     def __copy__(self):
         out = SitesLabel(
             name=self.name,
@@ -126,6 +143,8 @@ class Sites(object):
     # Prioritise our `__rmatmul__` over Numpy's `__matmul__`:
     __array_priority__ = 1
 
+    __hash__ = True
+
     def __init__(self, coords, labels=None, vector_direction='column',
                  dimension=3):
 
@@ -156,13 +175,23 @@ class Sites(object):
 
     def __eq__(self, other):
 
-        # TODO: add check of same class; add something to do with hash?
+        if self.__class__ != other.__class__:
+            return False
 
-        # Check coords equal:
-        pass
+        if not np.allclose(self._coords, other._coords):
+            return False
+
+        # Check for equal label keys:
+        if list(set(self.labels.keys()).symmetric_difference(
+                set(other.labels.keys()))):
+            return False
 
         # Check labels equal:
-        pass
+        for k, v in self.labels.items():
+            if v != other.labels[k]:
+                return False
+
+        return True
 
     def __copy__(self):
         out = Sites(
