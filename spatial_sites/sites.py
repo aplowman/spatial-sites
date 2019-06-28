@@ -175,43 +175,49 @@ class Sites(object):
 
     def __eq__(self, other):
 
-        if self.__class__ != other.__class__:
-            return False
+        if self.__class__ == other.__class__:
 
-        if not np.allclose(self._coords, other._coords):
-            return False
-
-        # Check for equal label keys:
-        if list(set(self.labels.keys()).symmetric_difference(
-                set(other.labels.keys()))):
-            return False
-
-        # Check labels equal:
-        for k, v in self.labels.items():
-            if v != other.labels[k]:
+            if not np.allclose(self._coords, other._coords):
                 return False
 
-        return True
+            # Check for equal label keys:
+            if list(set(self.labels.keys()).symmetric_difference(
+                    set(other.labels.keys()))):
+                return False
+
+            # Check labels equal:
+            for k, v in self.labels.items():
+                if v != other.labels[k]:
+                    return False
+
+            return True
+
+        else:
+            return self.coords == other
 
     def __lt__(self, other):
-        if self.__class__ != other.__class__:
-            return NotImplemented
-        return self.coords < other.coords
+        if self.__class__ == other.__class__:
+            return self.coords < other.coords
+        else:
+            return self.coords < other
 
     def __gt__(self, other):
-        if self.__class__ != other.__class__:
-            return NotImplemented
-        return self.coords > other.coords
+        if self.__class__ == other.__class__:
+            return self.coords > other.coords
+        else:
+            return self.coords > other
 
     def __le__(self, other):
-        if self.__class__ != other.__class__:
-            return NotImplemented
-        return self.coords <= other.coords
+        if self.__class__ == other.__class__:
+            return self.coords <= other.coords
+        else:
+            return self.coords <= other
 
     def __ge__(self, other):
-        if self.__class__ != other.__class__:
-            return NotImplemented
-        return self.coords >= other.coords
+        if self.__class__ == other.__class__:
+            return self.coords >= other.coords
+        else:
+            return self.coords >= other
 
     def __copy__(self):
         out = Sites(
