@@ -143,7 +143,7 @@ class Sites(object):
     # Prioritise our `__rmatmul__` over Numpy's `__matmul__`:
     __array_priority__ = 1
 
-    __hash__ = True
+    __hash__ = None
 
     def __init__(self, coords, labels=None, vector_direction='column',
                  dimension=3):
