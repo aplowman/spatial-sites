@@ -315,9 +315,8 @@ class Sites(object):
 
     def __matmul__(self, mat):
         """Transform site coordinates by a transformation matrix."""
-
         out = self.copy()
-        out @= mat
+        out.__imatmul__(mat)
         return out
 
     def __rmatmul__(self, mat):
@@ -328,9 +327,8 @@ class Sites(object):
                    ' matrix when `Sites.vector_direction` is "row".')
             raise ValueError(msg)
 
-        mat = self._validate_transformation_matrix(mat)
         out = self.copy()
-        out._coords = mat @ self._coords
+        out.transform(mat)
         return out
 
     def __imatmul__(self, mat):
@@ -341,9 +339,7 @@ class Sites(object):
                    ' matrix when `Sites.vector_direction` is "column".')
             raise ValueError(msg)
 
-        mat = self._validate_transformation_matrix(mat)
-        self._coords = mat.T @ self._coords
-
+        self.transform(mat)
         return self
 
     def _init_labels(self, labels):
@@ -703,8 +699,6 @@ class Sites(object):
         centre : ndarray of size 3, optional
             Centre of rotation. If not specified, the Cartesian origin is used.
 
-        TODO: needs some testing.
-
         """
 
         if not centre:
@@ -713,12 +707,17 @@ class Sites(object):
         centre = self._validate_translation_vector(
             centre)  # TODO rename this method
 
+        self.translate(-centre)
+        self.transform(mat)
+        self.translate(centre)
+
+    def transform(self, mat):
+
+        mat = self._validate_transformation_matrix(mat)
         if self.vector_direction == 'row':
             mat = mat.T
 
-        self.translate(-centre)
-        self = mat @ self
-        self.translate(centre)
+        self._coords = mat @ self._coords
 
 
 class SingleSite(Sites):
