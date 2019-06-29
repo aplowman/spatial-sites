@@ -579,9 +579,11 @@ class Sites(object):
     @vector_direction.setter
     def vector_direction(self, vector_direction):
         vector_direction_setter(self, vector_direction)
-        if hasattr(self, '_single_sites'):
+        try:
             for i in self._single_sites:
                 vector_direction_setter(i, vector_direction)
+        except AttributeError:
+            pass
 
     @property
     def centroid(self):
