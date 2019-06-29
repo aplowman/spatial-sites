@@ -146,11 +146,12 @@ class Sites(object):
     __hash__ = None
 
     def __init__(self, coords, labels=None, vector_direction='column',
-                 dimension=3):
+                 dimension=3, set_component_attributes=True):
 
         self.vector_direction = vector_direction
         self._coords = self._validate(coords, self.vector_direction, dimension)
         self._dimension = dimension
+        self._set_component_attributes = set_component_attributes
         self._labels = self._init_labels(labels)
 
         self._single_sites = [SingleSite(sites=self, site_index=i)
@@ -351,8 +352,30 @@ class Sites(object):
     def _init_labels(self, labels):
         """Set labels as attributes for easy access."""
 
+        BAD_LABELS = []
+        if self.set_component_attributes:
+
+            if self.dimension in [1, 2, 3]:
+                BAD_LABELS = ['x']
+                setattr(self, 'x', self.get_components(0))
+
+            if self.dimension in [2, 3]:
+                BAD_LABELS.append('y')
+                setattr(self, 'y', self.get_components(1))
+
+            if self.dimension in [3]:
+                BAD_LABELS.append('z')
+                setattr(self, 'z', self.get_components(2))
+
         label_objs = {}
         for k, v in (labels or {}).items():
+
+            if k in BAD_LABELS:
+                msg = ('Label name "{}" is a reserved component attribute '
+                       'name. If you want to use this attribute to refer to '
+                       'a label, instantiate the `Sites` object with '
+                       '`set_component_attributes=False`.')
+                raise ValueError(msg.format(k))
 
             if isinstance(v, SitesLabel):
                 sites_label = v
@@ -558,6 +581,10 @@ class Sites(object):
                     raise ValueError(msg.format(k, labs[k], v.dtype))
 
     @property
+    def set_component_attributes(self):
+        return self._set_component_attributes
+
+    @property
     def labels(self):
         return self._labels
 
@@ -730,6 +757,13 @@ class Sites(object):
 
         self._coords = mat @ self._coords
 
+    def get_components(self, component_index):
+        if component_index > (self.dimension - 1):
+            msg = ('`Sites` object has dimension {} and so the maximum '
+                   'component index is {}.')
+            raise IndexError(msg.format(self.dimension, self.dimension - 1))
+        return self._coords[component_index]
+
 
 class SingleSite(Sites):
     """A single, labelled point in space."""
@@ -740,9 +774,9 @@ class SingleSite(Sites):
         self.site_index = site_index
 
         self._coords = sites._coords[:, site_index][:, None]
+        self._dimension = sites.dimension
         self._labels = self._init_labels()
         self._vector_direction = sites.vector_direction
-        self._dimension = sites.dimension
 
     def __len__(self):
         raise NotImplementedError
@@ -752,6 +786,17 @@ class SingleSite(Sites):
 
     def _init_labels(self):
         """Set labels as attributes for easy access."""
+
+        if self.sites.set_component_attributes:
+
+            if self.dimension in [1, 2, 3]:
+                setattr(self, 'x', self.get_components(0)[0])
+
+            if self.dimension in [2, 3]:
+                setattr(self, 'y', self.get_components(1)[0])
+
+            if self.dimension in [3]:
+                setattr(self, 'z', self.get_components(2)[0])
 
         labels = {}
         for k, v in self.sites._labels.items():
