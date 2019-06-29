@@ -645,7 +645,7 @@ class Sites(object):
     @staticmethod
     def and_(*bool_arrs):
         """Convenience wrapper for Numpy's `logical_and`."""
-        
+
         if not len(bool_arrs) > 1:
             msg = 'Pass at least two boolean arrays.'
             raise ValueError(msg)
@@ -734,14 +734,51 @@ class Sites(object):
 
         self.__iadd__(vector)
 
-    def index(self, **kwargs):
-        """Filter site indices by a label with a particular value."""
+    def index(self, bool_arr=None, **kwargs):
+        """Filter site indices by a bool array or a label with a particular
+        value.
 
-        match_label, match_val = self._validate_label_filter(**kwargs)
-        label_vals = getattr(self, match_label)
-        match_idx = np.where(label_vals == match_val)[0]
+        Parameters
+        ----------
+        bool_arr : ndarray of bool of shape (len(self),), optional
+            If specified, get the indices (of sites) where bool_arr is True.
+        kwargs : dict
+            label name and value to match
 
+        Returns
+        -------
+        match_idx : ndarray of int
+            Indices of sites that match the given condition (either a bool
+            array or a particular label value).
+
+        """
+
+        if bool_arr is not None:
+            if bool_arr.shape != (len(self),):
+                msg = ('`bool_arr` must be a 1D array of length equal to the '
+                       'number of sites, which is {}.')
+                raise ValueError(msg.format(len(self)))
+            condition = bool_arr
+
+        else:
+            match_label, match_val = self._validate_label_filter(**kwargs)
+            label_vals = getattr(self, match_label)
+            condition = label_vals == match_val
+
+        match_idx = np.where(condition)[0]
+        
         return match_idx
+
+    def where(self, bool_arr):
+        """Filter sites by a bool array."""
+
+        match_idx = self.index(bool_arr)
+        match_sites = self._coords[:, match_idx]
+
+        if self.vector_direction == 'row':
+            match_sites = match_sites.T
+
+        return match_sites
 
     def whose(self, **kwargs):
         """Filter sites by a label with a particular value."""
