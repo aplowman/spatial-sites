@@ -129,7 +129,8 @@ class SitesLabel(object):
 
 
 class Sites(object):
-    """An ordered set points in space with arbitrary labelling.
+    """An ordered collection of points in N-dimensional space with arbitrary
+    labelling.
 
     Attributes
     ----------
@@ -766,7 +767,7 @@ class Sites(object):
             condition = label_vals == match_val
 
         match_idx = np.where(condition)[0]
-        
+
         return match_idx
 
     def where(self, bool_arr):
