@@ -642,6 +642,34 @@ class Sites(object):
 
         return out
 
+    @staticmethod
+    def and_(*bool_arrs):
+        """Convenience wrapper for Numpy's `logical_and`."""
+        
+        if not len(bool_arrs) > 1:
+            msg = 'Pass at least two boolean arrays.'
+            raise ValueError(msg)
+
+        out = bool_arrs[0]
+        for i in bool_arrs:
+            out = np.logical_and(out, i)
+
+        return out
+
+    @staticmethod
+    def or_(*bool_arrs):
+        """Convenience wrapper for Numpy's `logical_or`."""
+
+        if not len(bool_arrs) > 1:
+            msg = 'Pass at least two boolean arrays.'
+            raise ValueError(msg)
+
+        out = bool_arrs[0]
+        for i in bool_arrs:
+            out = np.logical_or(out, i)
+
+        return out
+
     def any(self, bool_arr):
         """Get 1-dimensional boolean array representing site indices where any
         components match an input boolean array.
