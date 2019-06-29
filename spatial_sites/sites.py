@@ -695,6 +695,9 @@ class Sites(object):
                 'type': 'scatter3d',
             })
 
+        if self.dimension > 3:
+            raise NotImplementedError
+
         return data
 
     def rotate(self, mat, centre=None):
