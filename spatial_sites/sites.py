@@ -642,6 +642,50 @@ class Sites(object):
 
         return out
 
+    def any(self, bool_arr):
+        """Get 1-dimensional boolean array representing site indices where any
+        components match an input boolean array.
+
+        Parameters
+        ----------
+        bool_arr : ndarray of bool of shape equal to that of self.coords
+
+        Returns
+        -------
+        ndarray of bool of shape (len(self), )
+
+        """
+
+        if bool_arr.shape != self.coords.shape:
+            msg = ('`bool_arr` must have the same shape as the `coords` '
+                   'attribute, which is {}.')
+            raise ValueError(msg.format(self.coords.shape))
+        axis = 0 if self.vector_direction == 'column' else 1
+
+        return np.any(bool_arr, axis=axis)
+
+    def all(self, bool_arr):
+        """Get 1-dimensional boolean array representing site indices where all
+        components match an input boolean array.
+
+        Parameters
+        ----------
+        bool_arr : ndarray of bool of shape equal to that of self.coords
+
+        Returns
+        -------
+        ndarray of bool of shape (len(self), )
+
+        """
+
+        if bool_arr.shape != self.coords.shape:
+            msg = ('`bool_arr` must have the same shape as the `coords` '
+                   'attribute, which is {}.')
+            raise ValueError(msg.format(self.coords.shape))
+        axis = 0 if self.vector_direction == 'column' else 1
+
+        return np.all(bool_arr, axis=axis)
+
     def copy(self):
         """Make a copy of the Sites object."""
         return self.__copy__()
