@@ -454,23 +454,23 @@ class Sites(object):
         else:
             return coords
 
-    def _validate_label_filter(self, **kwargs):
+    def _validate_label_filter(self, **label_values):
         """Validation for the `index` method."""
 
         if not self.labels:
             raise ValueError(
                 'No labels are associated with this Sites object.')
 
-        if not kwargs:
+        if not label_values:
             msg = ('Provide a label condition to filter the sites. Available '
                    'labels are: {}')
             raise ValueError(msg.format(list(self.labels.keys())))
 
-        if len(kwargs) > 1:
+        if len(label_values) > 1:
             msg = 'Only one label condition is currently supported by `whose`.'
             raise NotImplementedError(msg)
 
-        for match_label, match_val in kwargs.items():
+        for match_label, match_val in label_values.items():
             try:
                 getattr(self, match_label)
             except AttributeError as err:
@@ -735,7 +735,7 @@ class Sites(object):
 
         self.__iadd__(vector)
 
-    def index(self, bool_arr=None, **kwargs):
+    def index(self, bool_arr=None, **label_values):
         """Filter site indices by a bool array or a label with a particular
         value.
 
@@ -743,7 +743,7 @@ class Sites(object):
         ----------
         bool_arr : ndarray of bool of shape (len(self),), optional
             If specified, get the indices (of sites) where bool_arr is True.
-        kwargs : dict
+        label_values : dict
             label name and value to match
 
         Returns
@@ -762,7 +762,8 @@ class Sites(object):
             condition = bool_arr
 
         else:
-            match_label, match_val = self._validate_label_filter(**kwargs)
+            match_label, match_val = self._validate_label_filter(
+                **label_values)
             label_vals = getattr(self, match_label)
             condition = label_vals == match_val
 
@@ -781,10 +782,10 @@ class Sites(object):
 
         return match_sites
 
-    def whose(self, **kwargs):
+    def whose(self, **label_values):
         """Filter sites by a label with a particular value."""
 
-        match_idx = self.index(**kwargs)
+        match_idx = self.index(**label_values)
         match_sites = self._coords[:, match_idx]
 
         if self.vector_direction == 'row':
@@ -923,8 +924,8 @@ class SingleSite(Sites):
 
         return labels
 
-    def whose(self, **kwargs):
+    def whose(self, **label_values):
         raise NotImplementedError
 
-    def index(self, **kwargs):
+    def index(self, **label_values):
         raise NotImplementedError
