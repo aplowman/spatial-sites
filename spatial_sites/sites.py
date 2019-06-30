@@ -127,6 +127,19 @@ class SitesLabel(object):
                    'regular expression "{}".')
             raise ValueError(msg.format(name, pattern))
 
+    def remove(self, indices):
+        """Remove multiple site labels according to an array of indices."""
+
+        # Remove unwanted values:
+        keep = np.ones(len(self), dtype=bool)
+        keep[indices] = False
+        values = self.values[keep]
+
+        # Recompute unique values:
+        unique_values, values_idx = np.unique(values, return_inverse=True)
+        self.unique_values = unique_values
+        self.values_idx = values_idx
+
 
 class Sites(object):
     """An ordered collection of points in N-dimensional space with arbitrary
@@ -792,6 +805,19 @@ class Sites(object):
             match_sites = match_sites.T
 
         return match_sites
+
+    def remove(self, bool_arr=None, **label_values):
+        """Remove sites based on a bool_arr or a label value."""
+
+        match_idx = self.index(bool_arr, **label_values)
+        keep = np.ones(len(self), dtype=bool)
+        keep[match_idx] = False
+        self._coords = self._coords[:, keep]
+        self._single_sites = [i for i, j in zip(self._single_sites, keep) if j]
+
+        for label_name, sites_label in self.labels.items():
+            sites_label.remove(match_idx)
+            super().__setattr__(label_name, sites_label.values)
 
     def as_fractional(self, unit_cell):
         """Get coords in fractional units of a given unit cell.
