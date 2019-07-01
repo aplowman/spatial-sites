@@ -97,13 +97,13 @@ class SitesLabel(object):
         arg_fmt = ' ' * REPR_INDENT
         out = (
             '{0}(\n'
-            '{1}name={2},\n'
+            '{1}name={2!r},\n'
             '{1}unique_values={3!r},\n'
             '{1}values_idx={4!r},\n'
             ')'.format(
                 self.__class__.__name__,
                 arg_fmt,
-                "'" + self.name + "'",
+                self.name,
                 self.unique_values,
                 self.values_idx
             )
@@ -214,7 +214,7 @@ class Sites(object):
 
         labels = '{\n'
         for k, v in self.labels.items():
-            lab_name_fmt = "'{}': ".format(k)
+            lab_name_fmt = '{!r}: '.format(k)
             lab_vals_indent = '\n' + 2 * arg_fmt + ' ' * len(lab_name_fmt)
             lab_vals = '{!r}'.format(v).replace('\n', lab_vals_indent)
             labels += '{}{}{},'.format(2 * arg_fmt, lab_name_fmt, lab_vals)
@@ -222,16 +222,16 @@ class Sites(object):
 
         out = (
             '{0}(\n'
-            '{1}dimension={2},\n'
-            '{1}vector_direction={3},\n'
-            '{1}set_component_attributes={4},\n'
+            '{1}dimension={2!r},\n'
+            '{1}vector_direction={3!r},\n'
+            '{1}set_component_attributes={4!r},\n'
             '{1}coords={5},\n'
             '{1}labels={6},\n'
             ')'.format(
                 self.__class__.__name__,
                 arg_fmt,
                 self.dimension,
-                "'" + self.vector_direction + "'",
+                self.vector_direction,
                 self.set_component_attributes,
                 coords,
                 labels,
@@ -992,13 +992,13 @@ class SingleSite(Sites):
 
         out = (
             '{0}(\n'
-            '{1}site_index={3},\n'
-            '{1}sites={2},\n'
+            '{1}site_index={2!r},\n'
+            '{1}sites={3},\n'
             ')'.format(
                 self.__class__.__name__,
                 arg_fmt,
-                sites,
                 self.site_index,
+                sites,
             )
         )
         return out
