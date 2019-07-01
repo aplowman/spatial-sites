@@ -184,23 +184,45 @@ class Sites(object):
     __hash__ = None
 
     def __init__(self, coords, labels=None, vector_direction='column',
-                 dimension=3, set_component_attributes=True):
+                 dimension=3, component_labels=None):
+        """
+        Parameters
+        ----------
+        component_labels : list of str or False, optional
+            If specified, must be a list (of strings) of length equal to
+            `dimension`. Coordinate component will then be assigned to
+            instance attributes with these names. If False, no component
+            attributes will be set. By default, set to `None`, in which case
+            labels "x", "y", and "z" will be used (as appropriate, given
+            `dimension`).
+
+        """
 
         self.vector_direction = vector_direction
         self._coords = self._validate(coords, self.vector_direction, dimension)
         self._dimension = dimension
-        self._set_component_attributes = set_component_attributes
+
+        self._bad_label_names = self._get_bad_label_names()
+        self._component_labels = self._get_component_labels(component_labels)
+        self._set_component_attrs()
+
         self._labels = self._init_labels(labels)
 
         self._single_sites = [SingleSite(sites=self, site_index=i)
                               for i in range(len(self))]
 
     def __setattr__(self, name, value):
-        """Overridden method to prevent reassigning label attributes."""
+        """Overridden method to prevent reassigning label and component
+        attributes."""
 
         if getattr(self, '_labels', None) and name in self._labels:
-            msg = 'Can\'t set attribute "{}"'.format(name)
+            msg = 'Cannot set attribute "{}"'.format(name)
             raise AttributeError(msg)
+
+        if getattr(self, '_component_labels', None):
+            if name in self.component_labels:
+                msg = 'Cannot set attribute "{}"'.format(name)
+                raise AttributeError(msg)
 
         # Set all other attributes as normal:
         super().__setattr__(name, value)
@@ -224,7 +246,7 @@ class Sites(object):
             '{0}(\n'
             '{1}dimension={2!r},\n'
             '{1}vector_direction={3!r},\n'
-            '{1}set_component_attributes={4!r},\n'
+            '{1}component_labels={4!r},\n'
             '{1}coords={5},\n'
             '{1}labels={6},\n'
             ')'.format(
@@ -232,7 +254,7 @@ class Sites(object):
                 arg_fmt,
                 self.dimension,
                 self.vector_direction,
-                self.set_component_attributes,
+                self.component_labels,
                 coords,
                 labels,
             )
@@ -430,32 +452,71 @@ class Sites(object):
         self.transform(mat)
         return self
 
-    def _init_labels(self, labels):
-        """Set labels as attributes for easy access."""
+    def _get_component_labels(self, component_labels):
 
-        BAD_LABELS = []
-        if self.set_component_attributes:
+        out = []
 
+        if component_labels is None:
             if self.dimension in [1, 2, 3]:
-                BAD_LABELS = ['x']
-                setattr(self, 'x', self.get_components(0))
+                out.append('x')
 
             if self.dimension in [2, 3]:
-                BAD_LABELS.append('y')
-                setattr(self, 'y', self.get_components(1))
+                out.append('y')
 
-            if self.dimension in [3]:
-                BAD_LABELS.append('z')
-                setattr(self, 'z', self.get_components(2))
+            if self.dimension == 3:
+                out.append('z')
+
+        elif component_labels:
+            if len(component_labels) != self.dimension:
+                msg = ('If specifying `component_labels`, the list must be the'
+                       ' same length as the number of dimensions.')
+                raise ValueError(msg)
+
+            out = component_labels
+            for i in component_labels:
+                if i in self._bad_label_names:
+                    msg = '"{}" cannot be used as a component attribute name.'
+                    raise ValueError(msg.format(i))
+
+        self._bad_label_names += out
+
+        return out
+
+    def _get_bad_label_names(self):
+
+        bad_labels = [
+            'bad_label_names',
+            'vector_direction',
+            'coords',
+            'dimension',
+            'component_labels',
+            'labels',
+            'single_sites',
+        ]
+
+        # Include "underscored" versions of attributes names:
+        bad_labels = [j for i in bad_labels for j in [i, '_' + i]]
+
+        return bad_labels
+
+    def _set_component_attrs(self):
+        """Called on instantiation to set coordinate attributes like e.g. `x`
+        to the first coordinates component."""
+
+        if self._component_labels:
+            for i in range(self.dimension):
+                if self._component_labels[i]:
+                    super().__setattr__(self._component_labels[i],
+                                        self.get_components(i))
+
+    def _init_labels(self, labels):
+        """Set labels as attributes for easy access."""
 
         label_objs = {}
         for k, v in (labels or {}).items():
 
-            if k in BAD_LABELS:
-                msg = ('Label name "{}" is a reserved component attribute '
-                       'name. If you want to use this attribute to refer to '
-                       'a label, instantiate the `Sites` object with '
-                       '`set_component_attributes=False`.')
+            if k in self._bad_label_names:
+                msg = 'Label name "{}" is a reserved attribute name.'
                 raise ValueError(msg.format(k))
 
             if isinstance(v, Labels):
@@ -662,8 +723,8 @@ class Sites(object):
                     raise ValueError(msg.format(k, labs[k], v.dtype))
 
     @property
-    def set_component_attributes(self):
-        return self._set_component_attributes
+    def component_labels(self):
+        return self._component_labels
 
     @property
     def labels(self):
@@ -968,6 +1029,28 @@ class Sites(object):
             raise IndexError(msg.format(self.dimension, self.dimension - 1))
         return self._coords[component_index]
 
+    def add_labels(self, **labels):
+        """Associate more labels with the coordinates."""
+
+        for label_name in labels:
+            if getattr(self, '_labels', None):
+                if label_name in self.labels:
+                    msg = ('Cannot add a new label named "{}"; it already '
+                           'exists.')
+                    raise ValueError(msg.format(label_name))
+
+        new_labels = self._init_labels(labels)
+        self._labels.update(new_labels)
+
+        try:
+            for i in self._single_sites:
+                i._labels.update(i._init_labels(new_labels))
+        except AttributeError:
+            pass
+
+    def remove_labels(self, *label_names):
+        """Remove some of the labels associated with the coordinates."""
+
 
 class SingleSite(Sites):
     """A single, labelled point in space."""
@@ -979,8 +1062,9 @@ class SingleSite(Sites):
 
         self._coords = sites._coords[:, site_index][:, None]
         self._dimension = sites.dimension
-        self._set_component_attributes = sites.set_component_attributes
-        self._labels = self._init_labels()
+        self._component_labels = sites._component_labels
+        self._set_component_attrs()
+        self._labels = self._init_labels(sites._labels)
         self._vector_direction = sites.vector_direction
 
     def __repr__(self):
@@ -1017,37 +1101,53 @@ class SingleSite(Sites):
     def __getitem__(self, index):
         raise NotImplementedError
 
-    def _init_labels(self):
+    def _set_component_attrs(self):
+        """Called on instantiation to set coordinate attributes like e.g. `x`
+        to the first coordinates component."""
+
+        if self._component_labels:
+            for i in range(self.dimension):
+                if self._component_labels[i]:
+                    super(Sites, self).__setattr__(
+                        self._component_labels[i],
+                        self.get_components(i)
+                    )
+
+    def _init_labels(self, labels):
         """Set labels as attributes for easy access."""
 
-        if self.sites.set_component_attributes:
-
-            if self.dimension in [1, 2, 3]:
-                setattr(self, 'x', self.get_components(0)[0])
-
-            if self.dimension in [2, 3]:
-                setattr(self, 'y', self.get_components(1)[0])
-
-            if self.dimension in [3]:
-                setattr(self, 'z', self.get_components(2)[0])
-
-        labels = {}
-        for k, v in self.sites._labels.items():
+        label_objs = {}
+        for k, v in labels.items():
 
             val = v.values[self.site_index]
             sites_label = Labels(
                 k,
                 values=np.array(val),
             )
-            labels.update({
+            label_objs.update({
                 k: sites_label
             })
             setattr(self, k, val)
 
-        return labels
+        return label_objs
+
+    def get_components(self, component_index):
+        return super().get_components(component_index)[0]
+
+    def index(self, **label_values):
+        raise NotImplementedError
+
+    def where(self, bool_arr):
+        raise NotImplementedError
 
     def whose(self, **label_values):
         raise NotImplementedError
 
-    def index(self, **label_values):
+    def remove(self, bool_arr=None, **label_values):
+        raise NotImplementedError
+
+    def add_labels(self, **labels):
+        raise NotImplementedError
+
+    def remove_labels(self, *label_names):
         raise NotImplementedError
