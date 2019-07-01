@@ -16,7 +16,16 @@ from spatial_sites.utils import check_indices
 REPR_INDENT = 4
 
 
-def vector_direction_setter(obj, vector_direction):
+def vector_direction_setter(obj, vector_direction, warn=True):
+    """Set the `vector_direction` attribute of a given object.
+
+    Parameters
+    ----------
+    warn : bool, optional
+        If True, a warning will be produced when the current value of the
+        vector direction is already equivalent to the new value.
+
+    """
 
     if vector_direction not in ['row', 'r', 'column', 'col', 'c']:
         msg = ('`vector_direction` must be specified as a string, either '
@@ -28,11 +37,12 @@ def vector_direction_setter(obj, vector_direction):
     elif vector_direction == 'r':
         vector_direction = 'row'
 
-    old_vec_dir = getattr(obj, '_vector_direction', None)
-    if old_vec_dir:
-        if vector_direction == old_vec_dir:
-            msg = '`vector_direction` is already set to "{}"'
-            warnings.warn(msg.format(vector_direction))
+    if warn:
+        old_vec_dir = getattr(obj, '_vector_direction', None)
+        if old_vec_dir:
+            if vector_direction == old_vec_dir:
+                msg = '`vector_direction` is already set to "{}"'
+                warnings.warn(msg.format(vector_direction))
 
     obj._vector_direction = vector_direction
 
