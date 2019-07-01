@@ -13,6 +13,8 @@ import numpy as np
 
 from spatial_sites.utils import check_indices
 
+REPR_INDENT = 4
+
 
 def vector_direction_setter(obj, vector_direction):
 
@@ -89,6 +91,28 @@ class SitesLabel(object):
     @property
     def dtype(self):
         return self.unique_values.dtype
+
+    def __repr__(self):
+
+        arg_fmt = ' ' * REPR_INDENT
+        out = (
+            '{0}(\n'
+            '{1}name={2},\n'
+            '{1}unique_values={3!r},\n'
+            '{1}values_idx={4!r},\n'
+            ')'.format(
+                self.__class__.__name__,
+                arg_fmt,
+                "'" + self.name + "'",
+                self.unique_values,
+                self.values_idx
+            )
+        )
+
+        return out
+
+    def __str__(self):
+        return '{}: {}'.format(self.name, self.values)
 
     def __len__(self):
         return len(self.values)
@@ -180,6 +204,49 @@ class Sites(object):
 
         # Set all other attributes as normal:
         super().__setattr__(name, value)
+
+    def __repr__(self):
+
+        arg_fmt = ' ' * REPR_INDENT
+
+        coords = '{!r}'.format(self.coords)
+        coords = coords.replace('\n', '\n' + arg_fmt + ' ' * len('coords='))
+
+        labels = '{\n'
+        for k, v in self.labels.items():
+            lab_name_fmt = "'{}': ".format(k)
+            lab_vals_indent = '\n' + 2 * arg_fmt + ' ' * len(lab_name_fmt)
+            lab_vals = '{!r}'.format(v).replace('\n', lab_vals_indent)
+            labels += '{}{}{},'.format(2 * arg_fmt, lab_name_fmt, lab_vals)
+        labels += '\n{}}}'.format(arg_fmt)
+
+        out = (
+            '{0}(\n'
+            '{1}dimension={2},\n'
+            '{1}vector_direction={3},\n'
+            '{1}set_component_attributes={4},\n'
+            '{1}coords={5},\n'
+            '{1}labels={6},\n'
+            ')'.format(
+                self.__class__.__name__,
+                arg_fmt,
+                self.dimension,
+                "'" + self.vector_direction + "'",
+                self.set_component_attributes,
+                coords,
+                labels,
+            )
+        )
+        return out
+
+    def __str__(self):
+
+        labels = ''
+        for k, v in self.labels.items():
+            labels += '{!s}'.format(v)
+
+        out = '{}\n\n{}\n'.format(self.coords, labels)
+        return out
 
     def __len__(self):
         """Get how many coords there are in this Sites objects."""
@@ -912,8 +979,37 @@ class SingleSite(Sites):
 
         self._coords = sites._coords[:, site_index][:, None]
         self._dimension = sites.dimension
+        self._set_component_attributes = sites.set_component_attributes
         self._labels = self._init_labels()
         self._vector_direction = sites.vector_direction
+
+    def __repr__(self):
+
+        arg_fmt = ' ' * REPR_INDENT
+
+        sites = '{!r}'.format(self.sites)
+        sites = sites.replace('\n', '\n' + arg_fmt + ' ' * len('sites='))
+
+        out = (
+            '{0}(\n'
+            '{1}site_index={3},\n'
+            '{1}sites={2},\n'
+            ')'.format(
+                self.__class__.__name__,
+                arg_fmt,
+                sites,
+                self.site_index,
+            )
+        )
+        return out
+
+    def __str__(self):
+
+        labels = ''
+        for k, v in self.labels.items():
+            labels += '{}: {}'.format(k, v.values[0])
+
+        return '{}\n\n{}\n'.format(self.coords, labels)
 
     def __len__(self):
         raise NotImplementedError
