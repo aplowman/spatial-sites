@@ -37,7 +37,7 @@ def vector_direction_setter(obj, vector_direction):
     obj._vector_direction = vector_direction
 
 
-class SitesLabel(object):
+class Labels(object):
     """Class to represent the labelling of a set of points in space.
 
     Attributes
@@ -135,7 +135,7 @@ class SitesLabel(object):
         return True
 
     def __copy__(self):
-        out = SitesLabel(
+        out = Labels(
             name=self.name,
             unique_values=np.copy(self.unique_values),
             values_idx=np.copy(self.values_idx)
@@ -338,7 +338,7 @@ class Sites(object):
                 new_lab_vals = np.hstack([sites_lab.values,
                                           obj.labels[lab_name].values])
 
-                sites_lab_new = SitesLabel(name=lab_name, values=new_lab_vals)
+                sites_lab_new = Labels(name=lab_name, values=new_lab_vals)
                 new_labs.update({
                     lab_name: sites_lab_new,
                 })
@@ -458,7 +458,7 @@ class Sites(object):
                        '`set_component_attributes=False`.')
                 raise ValueError(msg.format(k))
 
-            if isinstance(v, SitesLabel):
+            if isinstance(v, Labels):
                 sites_label = v
 
             else:
@@ -479,7 +479,7 @@ class Sites(object):
                 else:
                     values = v
 
-                sites_label = SitesLabel(
+                sites_label = Labels(
                     k,
                     values=values,
                     unique_values=unique_values,
@@ -1035,7 +1035,7 @@ class SingleSite(Sites):
         for k, v in self.sites._labels.items():
 
             val = v.values[self.site_index]
-            sites_label = SitesLabel(
+            sites_label = Labels(
                 k,
                 values=np.array(val),
             )
