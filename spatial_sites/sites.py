@@ -1051,6 +1051,22 @@ class Sites(object):
     def remove_labels(self, *label_names):
         """Remove some of the labels associated with the coordinates."""
 
+        for i in label_names:
+            if i not in self.labels:
+                msg = 'Cannot remove label named "{}"; it does not exist.'
+                raise ValueError(msg.format(i))
+
+            # Remove from labels dict:
+            self._labels.pop(i)
+
+            # Remove attribute:
+            delattr(self, i)
+
+            # Remove label from `SingleSite`s:
+            for j in self._single_sites:
+                j._labels.pop(i)
+                delattr(j, i)
+
 
 class SingleSite(Sites):
     """A single, labelled point in space."""
