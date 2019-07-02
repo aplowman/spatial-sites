@@ -1138,19 +1138,27 @@ class Sites(object):
 
         return coords
 
-    def tile(self, other_sites):
+    def tile(self, other_sites, repeat_labels=None):
         """For each coordinate, generate more coordinates by combining
         coordinates with another Sites object (via addition).
 
         Parameters
         ----------
         other_sites : Sites
+        repeat_labels : dict
+            Keys are string label names, values are label names to add to the
+            new Sites object that enable the original order of repeated labels
+            values to be identified.
 
         Returns
         -------
         tiled_sites
 
         """
+
+        if not repeat_labels:
+            repeat_labels = {}
+
         if not isinstance(other_sites, self.__class__):
             msg = 'Pass another Sites object with which to tile.'
             raise ValueError(msg)
@@ -1172,11 +1180,39 @@ class Sites(object):
         # Merge labels
         new_labels = {}
         for label_name, label in self.labels.items():
+
+            if label_name in repeat_labels:
+                uniq_lab_order = np.zeros_like(label.values_idx)
+                for count_idx, i in enumerate(label.values_count):
+                    uniq_lab_order[label.values_idx == count_idx] = range(i)
+
+                uniq_lab_order = np.repeat(uniq_lab_order, len(other_sites))
+                new_labels.update({
+                    repeat_labels[label_name]: Labels(
+                        name=repeat_labels[label_name],
+                        values=uniq_lab_order,
+                    )
+                })
+
             new_labels.update({
                 label_name: np.repeat(label.values, len(other_sites))
             })
 
         for label_name, label in other_sites.labels.items():
+
+            if label_name in repeat_labels:
+                uniq_lab_order = np.zeros_like(label.values_idx)
+                for count_idx, i in enumerate(label.values_count):
+                    uniq_lab_order[label.values_idx == count_idx] = range(i)
+
+                uniq_lab_order = np.tile(uniq_lab_order, len(self))
+                new_labels.update({
+                    repeat_labels[label_name]: Labels(
+                        name=repeat_labels[label_name],
+                        values=uniq_lab_order,
+                    )
+                })
+
             new_labels.update({
                 label_name: np.tile(label.values, len(self))
             })
