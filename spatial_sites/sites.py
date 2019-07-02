@@ -11,7 +11,7 @@ import copy
 
 import numpy as np
 
-from spatial_sites.utils import check_indices
+from spatial_sites.utils import check_indices, cast_arr_to_float
 
 REPR_INDENT = 4
 
@@ -194,7 +194,8 @@ class Sites(object):
     __hash__ = None
 
     def __init__(self, coords, labels=None, vector_direction='column',
-                 dimension=3, component_labels=None, basis=None):
+                 dimension=3, component_labels=None, basis=None,
+                 cast_to_float=False):
         """
         Parameters
         ----------
@@ -205,11 +206,16 @@ class Sites(object):
             attributes will be set. By default, set to `None`, in which case
             labels "x", "y", and "z" will be used (as appropriate, given
             `dimension`).
+        cast_to_float : bool, optional
+            If True and the dtype of `coords` is not a floating point dtype,
+            `coords`, elements of `coords` will be cast to a floating point
+            numbers using the fractions module.
 
         """
 
         self.vector_direction = vector_direction
-        self._coords = self._validate(coords, self.vector_direction, dimension)
+        self._coords = self._validate(coords, self.vector_direction, dimension,
+                                      cast_to_float)
         self._dimension = dimension
         self.basis = basis
 
@@ -594,7 +600,7 @@ class Sites(object):
 
         return label_objs
 
-    def _validate(self, coords, vector_direction, dimension):
+    def _validate(self, coords, vector_direction, dimension, cast_to_float):
         """Validate inputs."""
 
         if dimension not in [2, 3]:
@@ -603,6 +609,9 @@ class Sites(object):
 
         if not isinstance(coords, np.ndarray):
             coords = np.array(coords)
+
+        if cast_to_float:
+            coords = cast_arr_to_float(coords)
 
         if coords.ndim != 2:
             raise ValueError('`coords` must be a 2D array.')

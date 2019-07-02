@@ -4,6 +4,20 @@ Module containing miscellaneous utility functions.
 
 """
 
+import fractions
+
+import numpy as np
+
+
+def cast_arr_to_float(arr):
+    """Cast elements of an Numpy array to floats using the fractions module."""
+
+    float_arr = np.zeros_like(arr, dtype=float) * np.nan
+    for idx, i in np.ndenumerate(arr):
+        float_arr[idx] = float(fractions.Fraction(i))
+
+    return float_arr
+
 
 def check_indices(seq, seq_idx):
     """
