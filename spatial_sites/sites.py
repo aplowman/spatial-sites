@@ -194,7 +194,7 @@ class Sites(object):
     __hash__ = None
 
     def __init__(self, coords, labels=None, vector_direction='column',
-                 dimension=3, component_labels=None):
+                 dimension=3, component_labels=None, basis=None):
         """
         Parameters
         ----------
@@ -211,6 +211,7 @@ class Sites(object):
         self.vector_direction = vector_direction
         self._coords = self._validate(coords, self.vector_direction, dimension)
         self._dimension = dimension
+        self.basis = basis
 
         self._bad_label_names = self._get_bad_label_names()
         self._component_labels = self._get_component_labels(component_labels)
@@ -750,6 +751,58 @@ class Sites(object):
             return self._coords
         else:
             return self._coords.T
+
+    @property
+    def basis(self):
+        if self.vector_direction == 'column':
+            return self._basis
+        else:
+            return self._basis.T
+
+    @basis.setter
+    def basis(self, new_basis):
+        """Set or change the basis of the coordinates."""
+
+        dim = self.dimension
+        req_shape = (dim, dim)
+
+        if new_basis is None:
+            # Set the default basis to the standard basis:
+            new_basis = np.eye(dim)
+
+        if not isinstance(new_basis, np.ndarray):
+            new_basis = np.array(new_basis)
+
+        if new_basis.shape != req_shape:
+            msg = '`new_basis` must be an array with shape {}.'
+            raise ValueError(msg.format(req_shape))
+
+        if self.vector_direction == 'row':
+            # Must use matrices of column vectors for both old and new bases:
+            new_basis = new_basis.T
+
+        try:
+            old_basis = self._basis
+        except AttributeError:
+            old_basis = None
+
+        if old_basis is not None:
+
+            try:
+                new_basis_inv = np.linalg.inv(new_basis)
+            except np.linalg.LinAlgError:
+                msg = ('New basis matrix is singular and so does not '
+                       'represent a basis set.')
+                raise ValueError(msg)
+
+            # Transform from old basis to standard, then from standard to new:
+            mat = new_basis_inv @ old_basis
+
+            # Transform coordinates:
+            self._coords = mat @ self._coords
+
+        # Set new basis:
+        self._basis = new_basis
 
     @property
     def vector_direction(self):
