@@ -76,13 +76,16 @@ class Labels(object):
         if values_idx is not None and not isinstance(values_idx, np.ndarray):
             values_idx = np.array(values_idx)
 
-        if values is not None:
-            # Get unique `values` and place indices in `values_idx`:
-            unique_values, values_idx = np.unique(values, return_inverse=True)
+        if values is None:
+            values = unique_values[values_idx]
 
-        else:
-            # Check unique values are all unique:
-            if len(np.unique(unique_values)) != len(unique_values):
+        uniq_val, val_idx, counts = np.unique(values, return_inverse=True,
+                                              return_counts=True)
+
+        if unique_values is not None:
+
+            # Check user-supplied unique values and idx make sense:
+            if not np.all(np.sort(uniq_val) == np.sort(unique_values)):
                 msg = ('Not all of the values in `unique_values` are unique.')
                 raise ValueError(msg)
 
@@ -91,8 +94,9 @@ class Labels(object):
 
         self._validate_name(name)
         self.name = name
-        self.unique_values = unique_values
-        self.values_idx = values_idx
+        self.unique_values = uniq_val
+        self.values_idx = val_idx
+        self.values_count = counts
 
     @property
     def values(self):
@@ -110,12 +114,14 @@ class Labels(object):
             '{1}name={2!r},\n'
             '{1}unique_values={3!r},\n'
             '{1}values_idx={4!r},\n'
+            '{1}values_count={5!r},\n'
             ')'.format(
                 self.__class__.__name__,
                 arg_fmt,
                 self.name,
                 self.unique_values,
-                self.values_idx
+                self.values_idx,
+                self.values_count,
             )
         )
 
