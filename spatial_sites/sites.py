@@ -1132,6 +1132,75 @@ class Sites(object):
 
         return coords
 
+    def tile(self, other_sites):
+        """For each coordinate, generate more coordinates by combining
+        coordinates with another Sites object (via addition).
+
+        Parameters
+        ----------
+        other_sites : Sites
+
+        Returns
+        -------
+        tiled_sites
+
+        """
+        if not isinstance(other_sites, self.__class__):
+            msg = 'Pass another Sites object with which to tile.'
+            raise ValueError(msg)
+
+        if not self.dimension == other_sites.dimension:
+            msg = 'Both Sites must share the same dimension.'
+            raise ValueError(msg)
+
+        # Check same basis
+        if not np.allclose(self.basis, other_sites.basis):
+            msg = 'Both Sites must share the same basis in order to tile.'
+            raise ValueError(msg)
+
+        # Merge coordinates
+        base_coords = self._coords.reshape((-1, self.dimension, 1))
+        tile_coords = other_sites._coords
+        new_coords = np.hstack(base_coords + tile_coords)
+
+        # Merge labels
+        new_labels = {}
+        for label_name, label in self.labels.items():
+            new_labels.update({
+                label_name: np.repeat(label.values, len(other_sites))
+            })
+
+        for label_name, label in other_sites.labels.items():
+            new_labels.update({
+                label_name: np.tile(label.values, len(self))
+            })
+
+        if self.vector_direction == 'row':
+            new_coords = new_coords.T
+
+        if self.vector_direction != other_sites.vector_direction:
+            msg = ('`vector_direction`s are not the same for both Sites '
+                    'objects. The `vector_direction` for the current Sites '
+                    'object ({}) will be used.')
+            warnings.warn(msg.format(self.vector_direction))
+
+        if self.component_labels != other_sites.component_labels:
+            msg = ('`component_labels`s are not the same for both Sites '
+                    'objects. The `component_labels` for the current Sites '
+                    'object ({}) will be used.')
+            warnings.warn(msg.format(self.component_labels))
+
+        out = Sites(
+            coords=new_coords,
+            labels=new_labels,
+            dimension=self.dimension,
+            vector_direction=self.vector_direction,
+            component_labels=self.component_labels,
+            basis=self.basis,
+        )
+
+        return out
+
 
 class SingleSite(Sites):
     """A single, labelled point in space."""
