@@ -565,20 +565,12 @@ class Sites(object):
                 sites_label = v
 
             else:
-                msg = ('Specify site labels as either a single list/tuple of '
-                       'values, or as a list/tuple of length two, whose first '
-                       'element is a list/tuple of unique values, and whose '
-                       'second element is a list/tuple of indices that index '
-                       'the first element.')
                 values = None
                 unique_values = None
                 values_idx = None
 
-                if len(v) == 2:
-                    if isinstance(v[0], (np.ndarray, list, tuple)):
-                        unique_values, values_idx = v
-                    else:
-                        raise ValueError(msg)
+                if len(v) == 2 and isinstance(v[0], (np.ndarray, list, tuple)):
+                    unique_values, values_idx = v
                 else:
                     values = v
 
