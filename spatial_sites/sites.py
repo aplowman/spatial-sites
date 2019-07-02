@@ -1159,10 +1159,10 @@ class Sites(object):
             msg = 'Both Sites must share the same dimension.'
             raise ValueError(msg)
 
-        # Check same basis
-        if not np.allclose(self.basis, other_sites.basis):
-            msg = 'Both Sites must share the same basis in order to tile.'
-            raise ValueError(msg)
+        rep_labs = list(self.labels.keys() & other_sites.labels.keys())
+        if rep_labs:
+            msg = 'Cannot tile Sites that share the same label names: {}'
+            raise ValueError(msg.format(rep_labs))
 
         # Merge coordinates
         base_coords = self._coords.reshape((-1, self.dimension, 1))
