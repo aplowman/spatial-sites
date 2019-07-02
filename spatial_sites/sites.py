@@ -1020,27 +1020,6 @@ class Sites(object):
             sites_label.remove(match_idx)
             super().__setattr__(label_name, sites_label.values)
 
-    def as_fractional(self, unit_cell):
-        """Get coords in fractional units of a given unit cell.
-
-        Parameters
-        ----------
-        unit_cell : ndarray of shape (3, 3)
-            Either row or column vectors, depending on `vector_direction`.
-
-        """
-
-        if self.vector_direction == 'row':
-            unit_cell = unit_cell.T
-
-        unit_cell_inv = np.linalg.inv(unit_cell)
-        sites_frac = np.dot(unit_cell_inv, self._coords)
-
-        if self.vector_direction == 'row':
-            sites_frac = sites_frac.T
-
-        return sites_frac
-
     def get_plot_data(self, group_by=None):
 
         data = {
