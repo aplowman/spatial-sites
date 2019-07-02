@@ -796,10 +796,7 @@ class Sites(object):
                 raise ValueError(msg)
 
             # Transform from old basis to standard, then from standard to new:
-            mat = new_basis_inv @ old_basis
-
-            # Transform coordinates:
-            self._coords = mat @ self._coords
+            self._coords = new_basis_inv @ old_basis @ self._coords
 
         # Set new basis:
         self._basis = new_basis
