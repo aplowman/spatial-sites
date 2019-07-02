@@ -493,6 +493,31 @@ class Sites(object):
 
         return out
 
+    def _get_coords(self, new_basis):
+
+        try:
+            old_basis = self._basis
+        except AttributeError:
+            old_basis = None
+
+        if old_basis is not None:
+
+            try:
+                new_basis_inv = np.linalg.inv(new_basis)
+            except np.linalg.LinAlgError:
+                msg = ('New basis matrix is singular and so does not '
+                       'represent a basis set.')
+                raise ValueError(msg)
+
+            # Transform from old basis to standard, then from standard to new:
+            coords = new_basis_inv @ old_basis @ self._coords
+
+        else:
+            # If no existing basis, coords are already in the correct basis:
+            coords = self._coords
+
+        return coords
+
     def _get_bad_label_names(self):
 
         bad_labels = [
@@ -733,6 +758,28 @@ class Sites(object):
                            'have uncastable `dtype`s: {} and {}')
                     raise ValueError(msg.format(k, labs[k], v.dtype))
 
+    def _validate_new_basis(self, new_basis):
+
+        dim = self.dimension
+        req_shape = (dim, dim)
+
+        if new_basis is None:
+            # Set the default basis to the standard basis:
+            new_basis = np.eye(dim)
+
+        if not isinstance(new_basis, np.ndarray):
+            new_basis = np.array(new_basis)
+
+        if new_basis.shape != req_shape:
+            msg = '`new_basis` must be an array with shape {}.'
+            raise ValueError(msg.format(req_shape))
+
+        if self.vector_direction == 'row':
+            # Must use matrices of column vectors for both old and new bases:
+            new_basis = new_basis.T
+
+        return new_basis
+
     @property
     def component_labels(self):
         return self._component_labels
@@ -763,42 +810,8 @@ class Sites(object):
     def basis(self, new_basis):
         """Set or change the basis of the coordinates."""
 
-        dim = self.dimension
-        req_shape = (dim, dim)
-
-        if new_basis is None:
-            # Set the default basis to the standard basis:
-            new_basis = np.eye(dim)
-
-        if not isinstance(new_basis, np.ndarray):
-            new_basis = np.array(new_basis)
-
-        if new_basis.shape != req_shape:
-            msg = '`new_basis` must be an array with shape {}.'
-            raise ValueError(msg.format(req_shape))
-
-        if self.vector_direction == 'row':
-            # Must use matrices of column vectors for both old and new bases:
-            new_basis = new_basis.T
-
-        try:
-            old_basis = self._basis
-        except AttributeError:
-            old_basis = None
-
-        if old_basis is not None:
-
-            try:
-                new_basis_inv = np.linalg.inv(new_basis)
-            except np.linalg.LinAlgError:
-                msg = ('New basis matrix is singular and so does not '
-                       'represent a basis set.')
-                raise ValueError(msg)
-
-            # Transform from old basis to standard, then from standard to new:
-            self._coords = new_basis_inv @ old_basis @ self._coords
-
-        # Set new basis:
+        new_basis = self._validate_new_basis(new_basis)
+        self._coords = self._get_coords(new_basis)
         self._basis = new_basis
 
     @property
@@ -1126,6 +1139,18 @@ class Sites(object):
             for j in self._single_sites:
                 j._labels.pop(i)
                 delattr(j, i)
+
+    def get_coords(self, new_basis=None):
+        """Get coordinates in another basis. By default, coordinates are
+        returned in the standard basis."""
+
+        new_basis = self._validate_new_basis(new_basis)
+        coords = self._get_coords(new_basis)
+
+        if self.vector_direction == 'row':
+            coords = coords.T
+
+        return coords
 
 
 class SingleSite(Sites):
