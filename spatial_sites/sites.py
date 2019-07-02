@@ -1186,14 +1186,14 @@ class Sites(object):
 
         if self.vector_direction != other_sites.vector_direction:
             msg = ('`vector_direction`s are not the same for both Sites '
-                    'objects. The `vector_direction` for the current Sites '
-                    'object ({}) will be used.')
+                   'objects. The `vector_direction` for the current Sites '
+                   'object ({}) will be used.')
             warnings.warn(msg.format(self.vector_direction))
 
         if self.component_labels != other_sites.component_labels:
             msg = ('`component_labels`s are not the same for both Sites '
-                    'objects. The `component_labels` for the current Sites '
-                    'object ({}) will be used.')
+                   'objects. The `component_labels` for the current Sites '
+                   'object ({}) will be used.')
             warnings.warn(msg.format(self.component_labels))
 
         out = Sites(
