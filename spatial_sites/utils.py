@@ -9,6 +9,20 @@ import fractions
 import numpy as np
 
 
+def repr_dict(dict_obj, indent=4):
+
+    indent = ' ' * indent
+    out = '{\n'
+    for k, v in dict_obj.items():
+        name_fmt = '{!r}: '.format(k)
+        vals_indent = '\n' + 2 * indent
+        vals = '{!r}'.format(v).replace('\n', vals_indent)
+        out += '{}{}{},\n'.format(2 * indent, name_fmt, vals)
+    out += '{}}}'.format(indent)
+
+    return out
+
+
 def cast_arr_to_float(arr):
     """Cast elements of an Numpy array to floats using the fractions module."""
 

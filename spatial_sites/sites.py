@@ -11,7 +11,7 @@ import copy
 
 import numpy as np
 
-from spatial_sites.utils import check_indices, cast_arr_to_float
+from spatial_sites.utils import check_indices, cast_arr_to_float, repr_dict
 
 REPR_INDENT = 4
 
@@ -256,14 +256,7 @@ class Sites(object):
 
         coords = '{!r}'.format(self.coords)
         coords = coords.replace('\n', '\n' + arg_fmt + ' ' * len('coords='))
-
-        labels = '{\n'
-        for k, v in self.labels.items():
-            lab_name_fmt = '{!r}: '.format(k)
-            lab_vals_indent = '\n' + 2 * arg_fmt
-            lab_vals = '{!r}'.format(v).replace('\n', lab_vals_indent)
-            labels += '{}{}{},\n'.format(2 * arg_fmt, lab_name_fmt, lab_vals)
-        labels += '{}}}'.format(arg_fmt)
+        labels = repr_dict(self.labels, REPR_INDENT)
 
         out = (
             '{0}(\n'
