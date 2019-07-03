@@ -1274,11 +1274,11 @@ class SingleSite(Sites):
 
     def __str__(self):
 
-        labels = ''
+        labels = []
         for k, v in self.labels.items():
-            labels += '{}: {}'.format(k, v.values[0])
+            labels.append('{}: {}'.format(k, v.values[0]))
 
-        return '{}\n\n{}\n'.format(self.coords, labels)
+        return '{}\n\n{}\n'.format(self.coords, '\n'.join(labels))
 
     def __len__(self):
         raise NotImplementedError
