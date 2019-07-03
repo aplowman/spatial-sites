@@ -11,6 +11,9 @@ import numpy as np
 
 def repr_dict(dict_obj, indent=4):
 
+    if not dict_obj:
+        return '{}'
+
     indent = ' ' * indent
     out = '{\n'
     for k, v in dict_obj.items():
