@@ -260,10 +260,10 @@ class Sites(object):
         labels = '{\n'
         for k, v in self.labels.items():
             lab_name_fmt = '{!r}: '.format(k)
-            lab_vals_indent = '\n' + 2 * arg_fmt + ' ' * len(lab_name_fmt)
+            lab_vals_indent = '\n' + 2 * arg_fmt
             lab_vals = '{!r}'.format(v).replace('\n', lab_vals_indent)
-            labels += '{}{}{},'.format(2 * arg_fmt, lab_name_fmt, lab_vals)
-        labels += '\n{}}}'.format(arg_fmt)
+            labels += '{}{}{},\n'.format(2 * arg_fmt, lab_name_fmt, lab_vals)
+        labels += '{}}}'.format(arg_fmt)
 
         out = (
             '{0}(\n'
@@ -286,11 +286,11 @@ class Sites(object):
 
     def __str__(self):
 
-        labels = ''
+        labels = []
         for k, v in self.labels.items():
-            labels += '{!s}'.format(v)
+            labels.append('{!s}'.format(v))
 
-        out = '{}\n\n{}\n'.format(self.coords, labels)
+        out = '{}\n\n{}\n'.format(self.coords, '\n'.join(labels))
         return out
 
     def __len__(self):
@@ -1264,7 +1264,7 @@ class SingleSite(Sites):
         arg_fmt = ' ' * REPR_INDENT
 
         sites = '{!r}'.format(self.sites)
-        sites = sites.replace('\n', '\n' + arg_fmt + ' ' * len('sites='))
+        sites = sites.replace('\n', '\n' + arg_fmt)
 
         out = (
             '{0}(\n'
