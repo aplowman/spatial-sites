@@ -643,18 +643,19 @@ class Sites(object):
                    'labels are: {}')
             raise ValueError(msg.format(list(self.labels.keys())))
 
-        if len(label_values) > 1:
-            msg = 'Only one label condition is currently supported by `whose`.'
-            raise NotImplementedError(msg)
-
+        label_vals = {}
         for match_label, match_val in label_values.items():
             try:
                 getattr(self, match_label)
-            except AttributeError as err:
+            except AttributeError:
                 msg = 'No Sites label called "{}" was found.'
                 raise ValueError(msg.format(match_label))
 
-            return match_label, match_val
+            label_vals.update({
+                match_label: match_val,
+            })
+
+        return label_vals
 
     def _validate_translation_vector(self, vector):
         """Validate that an input vector is suitable for translation.
@@ -976,10 +977,15 @@ class Sites(object):
             condition = bool_arr
 
         else:
-            match_label, match_val = self._validate_label_filter(
-                **label_values)
-            label_vals = getattr(self, match_label)
-            condition = label_vals == match_val
+            label_match_vals = self._validate_label_filter(**label_values)
+            condition = None
+            for match_label, match_val in label_match_vals.items():
+                label_vals = getattr(self, match_label)
+                condition_i = label_vals == match_val
+                if condition is None:
+                    condition = condition_i
+                else:
+                    condition = np.logical_and(condition, condition_i)
 
         match_idx = np.where(condition)[0]
 
