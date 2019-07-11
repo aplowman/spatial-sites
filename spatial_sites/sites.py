@@ -594,10 +594,6 @@ class Sites(object):
     def _validate(self, coords, vector_direction, dimension, cast_to_float):
         """Validate inputs."""
 
-        if dimension not in [2, 3]:
-            msg = '`dimension` must be an integer: 2 or 3.'
-            raise ValueError(msg)
-
         if not isinstance(coords, np.ndarray):
             coords = np.array(coords)
 
