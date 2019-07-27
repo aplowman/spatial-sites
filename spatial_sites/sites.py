@@ -317,7 +317,6 @@ class Sites(object):
                 basis=self.basis,                
             )
 
-
     def __eq__(self, other):
 
         if self.__class__ == other.__class__:
