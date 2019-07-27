@@ -291,7 +291,32 @@ class Sites(object):
         return self._coords.shape[1]
 
     def __getitem__(self, index):
-        return self._single_sites[index]
+        if isinstance(index, numbers.Integral):
+            return self._single_sites[index]
+        elif isinstance(index, (list, np.ndarray)):
+            # "Fancy indexing" (1D only)
+            index = np.array(index)
+            if index.ndim > 1:
+                msg = ('Index array must have one dimension, but has {} dimensions.')
+                raise IndexError(msg.format(index.ndim))
+
+            new_coords = self._coords[:, index]
+            if self.vector_direction == 'row':
+                new_coords = new_coords.T            
+
+            new_labs = {}
+            for lab_name, lab in self.labels.items():
+                new_labs.update({lab_name: Labels(lab_name, lab.values[index])})
+            
+            return Sites(
+                coords=new_coords,
+                labels=new_labs,
+                vector_direction=self.vector_direction,
+                dimension=self.dimension,
+                component_labels=self.component_labels,
+                basis=self.basis,                
+            )
+
 
     def __eq__(self, other):
 
