@@ -412,32 +412,36 @@ class Sites(object):
 
         return self
 
-    def __mul__(self, number):
-        """Scale coordinates by a scalar."""
+    def __mul__(self, multiplier):
+        'Multiplication by scalar or broadcastable Numpy array.'
         out = self.copy()
-        out *= number
+        out *= multiplier
         return out
 
     def __rmul__(self, number):
         return self.__mul__(number)
 
-    def __imul__(self, number):
-        """Scale coordinates by a scalar."""
-        if isinstance(number, numbers.Number):
-            self._coords *= number
-            return self
+    def __imul__(self, multiplier):
+        'In-place multiplication by scalar or broadcastable Numpy array.'
+        multiplier = np.array(multiplier)
+        if self.vector_direction == 'row':
+            multiplier = multiplier.T
+        self._coords *= multiplier
+        return self
 
-    def __truediv__(self, number):
-        """Scale coordinates by a scalar."""
+    def __truediv__(self, divisor):
+        'True division by scalar or broadcastable Numpy array.'
         out = self.copy()
-        out /= number
+        out /= divisor
         return out
 
-    def __itruediv__(self, number):
-        """Scale coordinates by a scalar."""
-        if isinstance(number, numbers.Number):
-            self._coords /= number
-            return self
+    def __itruediv__(self, divisor):
+        'In-place true division by scalar or broadcastable Numpy array.'
+        divisor = np.array(divisor)
+        if self.vector_direction == 'row':
+            divisor = divisor.T
+        self._coords /= divisor
+        return self
 
     def __matmul__(self, mat):
         """Transform site coordinates by a transformation matrix."""
