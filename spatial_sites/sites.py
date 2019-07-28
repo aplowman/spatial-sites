@@ -575,8 +575,7 @@ class Sites(object):
         if self._component_labels:
             for i in range(self.dimension):
                 if self._component_labels[i]:
-                    super().__setattr__(self._component_labels[i],
-                                        self.get_components(i))
+                    super().__setattr__(self._component_labels[i], self.get_components(i))
 
     def _init_labels(self, labels):
         """Set labels as attributes for easy access."""
