@@ -1265,6 +1265,42 @@ class Sites(object):
 
         return out
 
+    def to_homogeneous(self, component_label='w'):
+        'Add another dimension with components 1.'
+        self._coords = np.vstack([self._coords, np.ones(len(self))])
+        self._dimension += 1
+        self._basis = np.vstack([
+            np.hstack([self.basis, np.zeros((3, 1))]),
+            np.array([0, 0, 0, 1])
+        ])
+
+        for idx, i in enumerate(self._single_sites):
+            i._dimension = self.dimension
+            i._coords = self._coords[:, idx][:, None]
+
+        if component_label:
+            if hasattr(self, component_label):
+                msg = ('Cannot label homogeneous coordinate as "{}", since this is '
+                       'already an attribute.'.format(component_label))
+                raise ValueError(msg)
+            else:
+                self._component_labels.append(component_label)
+                self._bad_label_names.append(component_label)
+                super().__setattr__(component_label,
+                                    self.get_components(self.dimension - 1))
+
+                for i in self._single_sites:
+                    super(Sites, i).__setattr__(component_label,
+                                                i.get_components(self.dimension - 1))
+
+    def from_homogeneous(self):
+        'Divide by and then remove the final component.'
+        # Divide all components by final component
+        # Delete final row from self._coords
+        # Decrement dimension by -1
+        # Change basis to 3D matrix?
+        # Remove component label attribute.
+
 
 class SingleSite(Sites):
     """A single, labelled point in space."""
@@ -1275,7 +1311,7 @@ class SingleSite(Sites):
         self.site_index = site_index
 
         self._coords = sites._coords[:, site_index][:, None]
-        self._dimension = sites.dimension
+        self._dimension = sites._dimension
         self._component_labels = sites._component_labels
         self._set_component_attrs()
         self._labels = self._init_labels(sites._labels)
