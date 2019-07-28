@@ -514,8 +514,9 @@ class Sites(object):
         elif component_labels:
             if len(component_labels) != self.dimension:
                 msg = ('If specifying `component_labels`, the list must be the'
-                       ' same length as the number of dimensions.')
-                raise ValueError(msg)
+                       ' same length as the number of dimensions, but "{}" was '
+                       'specified.')
+                raise ValueError(msg.format(component_labels))
 
             out = component_labels
             for i in component_labels:
