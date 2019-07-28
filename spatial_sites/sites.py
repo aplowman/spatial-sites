@@ -1295,11 +1295,23 @@ class Sites(object):
 
     def from_homogeneous(self):
         'Divide by and then remove the final component.'
-        # Divide all components by final component
-        # Delete final row from self._coords
-        # Decrement dimension by -1
-        # Change basis to 3D matrix?
-        # Remove component label attribute.
+
+        comp_label = None
+        if len(self.component_labels) == self.dimension:
+            comp_label = self._component_labels.pop()
+            self._bad_label_names.remove(comp_label)
+            self.__delattr__(comp_label)
+
+        self._coords /= self._coords[-1]  # "Perspective divide"
+        self._coords = self._coords[:-1]
+        self._dimension -= 1
+        self._basis = self._basis[0:-1, 0:-1]
+
+        for idx, i in enumerate(self._single_sites):
+            i._dimension = self.dimension
+            i._coords = self._coords[:, idx][:, None]
+            if comp_label:
+                i.__delattr__(comp_label)
 
 
 class SingleSite(Sites):
