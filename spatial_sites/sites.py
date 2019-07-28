@@ -302,19 +302,19 @@ class Sites(object):
 
             new_coords = self._coords[:, index]
             if self.vector_direction == 'row':
-                new_coords = new_coords.T            
+                new_coords = new_coords.T
 
             new_labs = {}
             for lab_name, lab in self.labels.items():
                 new_labs.update({lab_name: Labels(lab_name, lab.values[index])})
-            
+
             return Sites(
                 coords=new_coords,
                 labels=new_labs,
                 vector_direction=self.vector_direction,
                 dimension=self.dimension,
                 component_labels=self.component_labels,
-                basis=self.basis,                
+                basis=self.basis,
             )
 
     def __eq__(self, other):
