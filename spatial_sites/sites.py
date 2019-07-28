@@ -1293,6 +1293,8 @@ class Sites(object):
                     super(Sites, i).__setattr__(component_label,
                                                 i.get_components(self.dimension - 1))
 
+        return self
+
     def from_homogeneous(self):
         'Divide by and then remove the final component.'
 
@@ -1313,6 +1315,7 @@ class Sites(object):
             if comp_label:
                 i.__delattr__(comp_label)
 
+        return self
 
 class SingleSite(Sites):
     """A single, labelled point in space."""
