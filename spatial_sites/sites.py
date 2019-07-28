@@ -369,6 +369,7 @@ class Sites(object):
             vector_direction=self.vector_direction,
             labels=copy.deepcopy(self.labels),
             dimension=self.dimension,
+            component_labels=self.component_labels,
         )
         return out
 
