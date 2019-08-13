@@ -370,6 +370,7 @@ class Sites(object):
             labels=copy.deepcopy(self.labels),
             dimension=self.dimension,
             component_labels=copy.copy(self.component_labels),
+            basis=np.copy(self.basis),
         )
         return out
 
