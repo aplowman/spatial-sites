@@ -176,9 +176,11 @@ class Labels(object):
         values = self.values[keep]
 
         # Recompute unique values:
-        unique_values, values_idx = np.unique(values, return_inverse=True)
-        self.unique_values = unique_values
-        self.values_idx = values_idx
+        uniq_val, val_idx, counts = np.unique(values, return_inverse=True,
+                                              return_counts=True)
+        self.unique_values = uniq_val
+        self.values_idx = val_idx
+        self.values_count = counts
 
 
 class Sites(object):
