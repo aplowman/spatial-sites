@@ -1087,11 +1087,10 @@ class Sites(object):
 
         """
 
-        if not centre:
+        if centre is None:
             centre = [0, 0, 0]
 
-        centre = self._validate_translation_vector(
-            centre)  # TODO rename this method
+        centre = self._validate_translation_vector(centre)  # TODO rename this method
 
         self.translate(-centre)
         self.transform(mat)
