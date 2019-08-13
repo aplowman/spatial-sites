@@ -183,6 +183,20 @@ class Labels(object):
         self.values_count = counts
 
 
+class FilteredLabels(Labels):
+
+    def __init__(self, labels_obj, keep_arr):
+
+        self.name = labels_obj.name
+        self.unique_values = labels_obj.unique_values
+        self.values_idx = np.ma.array(labels_obj.values_idx, mask=~keep_arr)
+        self.values_count = labels_obj.values_count
+
+    @property
+    def values(self):
+        return self.unique_values[self.values_idx.compressed()]
+
+
 class Sites(object):
     """An ordered collection of points in N-dimensional space with arbitrary
     labelling.
@@ -841,6 +855,7 @@ class Sites(object):
 
         new_basis = self._validate_new_basis(new_basis)
         self._coords = self._get_coords(new_basis)
+        # TODO: need to update x, y, z, ... attributes?!? Do .x .y .z deviate from ._coords when I manipulate self._coords directly?
         self._basis = new_basis
 
     @property
@@ -978,15 +993,26 @@ class Sites(object):
 
         self.__iadd__(vector)
 
-    def index(self, bool_arr=None, **label_values):
+    def index_arr(self, bool_arr=None, inverse=False, label_match_mode='and',
+                  **label_values):
         """Get the indices of sites using a bool array or labels with particular values.
 
         Parameters
         ----------
         bool_arr : ndarray of bool of shape (len(self),), optional
-            If specified, get the indices (of sites) where bool_arr is True.
+            If specified, get the indices (of sites) where bool_arr is True. Specify
+            exactly one of `bool_arr` and `label_vales`.        
+        inverse : bool
+            If True, get the indices when either the bool array is False, or where the
+            labels do not have the specified values. For a site index to be returned, all
+            of the specified labels must not match the given values. By default, False.
+        label_match_mode : str
+            Determines whether to combine label value conditions using logical AND ("and")
+            (default) or logical OR ("or").
         label_values : dict
-            label names and values to match
+            label names and values to match. Specify exactly one of `bool_arr` and
+            `label_vales`. For a site index to be returned, all of the specified labels
+            values must match the given values.
 
         Returns
         -------
@@ -1001,21 +1027,31 @@ class Sites(object):
                 msg = ('`bool_arr` must be a 1D array of length equal to the '
                        'number of sites, which is {}.')
                 raise ValueError(msg.format(len(self)))
-            condition = bool_arr
-
+            condition = np.copy(bool_arr)
+            if inverse:
+                condition = np.logical_not(condition)
         else:
             label_match_vals = self._validate_label_filter(**label_values)
             condition = None
             for match_label, match_val in label_match_vals.items():
                 label_vals = getattr(self, match_label)
-                condition_i = label_vals == match_val
+                if inverse:
+                    condition_i = label_vals != match_val
+                else:
+                    condition_i = label_vals == match_val
                 if condition is None:
                     condition = condition_i
                 else:
-                    condition = np.logical_and(condition, condition_i)
+                    if label_match_mode == 'and':
+                        condition = np.logical_and(condition, condition_i)
+                    elif label_match_mode == 'or':
+                        condition = np.logical_or(condition, condition_i)
 
-        match_idx = np.where(condition)[0]
+        return condition
 
+    def index(self, bool_arr=None, inverse=False, label_match_mode='and', **label_values):
+        match_arr = self.index_arr(bool_arr, inverse, label_match_mode, **label_values)
+        match_idx = np.where(match_arr)[0]
         return match_idx
 
     def where(self, bool_arr):
@@ -1029,10 +1065,10 @@ class Sites(object):
 
         return match_sites
 
-    def whose(self, **label_values):
+    def whose(self, inverse=False, label_match_mode='and', **label_values):
         """Get coordinates whose labels have a particular value."""
 
-        match_idx = self.index(**label_values)
+        match_idx = self.index(None, inverse, label_match_mode, **label_values)
         match_sites = self._coords[:, match_idx]
 
         if self.vector_direction == 'row':
@@ -1040,10 +1076,42 @@ class Sites(object):
 
         return match_sites
 
-    def remove(self, bool_arr=None, **label_values):
-        """Remove sites based on a bool_arr or a label value."""
+    def filter(self, bool_arr=None, copy=False, label_match_mode='and', **label_values):
+        """Filter using a bool array or label values.
 
-        match_idx = self.index(bool_arr, **label_values)
+        Parameters
+        ----------
+        bool_arr : ndarray of bool of shape (len(self),), optional
+            If specified, filter sites by the indices where bool_arr is True. Specify
+            exactly one of `bool_arr` and `label_vales`.        
+        copy : bool, optional
+            If True, return a new `Sites` object, with only coordinates matching the
+            filtering conditions. If False, return a `FilteredSites` object, that acts
+            as a view into this `Sites` object. False by default.
+        label_values : dict
+            label names and values to match. Specify exactly one of `bool_arr` and
+            `label_vales`.
+
+        Returns
+        -------
+        filtered_sites : Sites or FilteredSites            
+
+        """
+        if copy:
+            filtered_sites = self.copy()
+            filtered_sites.remove(bool_arr, True, label_match_mode, **label_values)
+        else:
+            filtered_sites = FilteredSites(
+                sites_obj=self,
+                bool_arr=bool_arr,
+                label_match_mode=label_match_mode,
+                **label_values
+            )
+
+        return filtered_sites
+
+    def remove_idx(self, match_idx):
+        'Remove sites based on an index array.'
         keep = np.ones(len(self), dtype=bool)
         keep[match_idx] = False
         self._coords = self._coords[:, keep]
@@ -1052,6 +1120,10 @@ class Sites(object):
         for label_name, sites_label in self.labels.items():
             sites_label.remove(match_idx)
             super().__setattr__(label_name, sites_label.values)
+
+    def remove(self, bool_arr=None, inverse=False, label_match_mode='and', **label_values):
+        'Remove sites based on a bool_arr or a label value.'
+        self.remove_idx(self.index(bool_arr, inverse, label_match_mode, **label_values))
 
     def get_plot_data(self, group_by=None):
 
@@ -1326,6 +1398,7 @@ class Sites(object):
         for i in vals:
             self._coords[abs(self._coords - i) < tol] = i
 
+
 class SingleSite(Sites):
     """A single, labelled point in space."""
 
@@ -1425,3 +1498,48 @@ class SingleSite(Sites):
 
     def remove_labels(self, *label_names):
         raise NotImplementedError
+
+
+class FilteredSites(Sites):
+    'A view into a Sites object where some coordinates are masked.'
+
+    def __init__(self, sites_obj, bool_arr=None, **label_values):
+        """Filter site indices by a bool array or a label with a particular
+        value.
+
+        Parameters
+        ----------
+        bool_arr : ndarray of bool of shape (len(self),), optional
+            If specified, get the indices (of sites) where bool_arr is True.
+        label_values : dict
+            label name and value to match
+
+        Returns
+        -------
+        match_idx : ndarray of int
+            Indices of sites that match the given condition (either a bool
+            array or a particular label value).
+
+        """
+
+        keep_arr = sites_obj.index_arr(bool_arr, **label_values)
+        keep_arr_tiled = np.tile(keep_arr, (sites_obj.dimension, 1))
+
+        self.vector_direction = sites_obj.vector_direction
+        self._coords = np.ma.array(sites_obj._coords, mask=~keep_arr_tiled)
+        self._dimension = sites_obj.dimension
+        self.basis = sites_obj.basis
+
+        self._bad_label_names = sites_obj._bad_label_names
+        self._component_labels = sites_obj._component_labels
+
+        # self._set_component_attrs() # TODO
+
+        self._labels = {k: FilteredLabels(v, keep_arr)
+                        for k, v in sites_obj._labels.items()}
+
+        for k, v in self._labels.items():
+            super(Sites, self).__setattr__(k, v.values)
+
+        self._single_sites = [i for idx, i in enumerate(sites_obj._single_sites)
+                              if keep_arr[idx]]
