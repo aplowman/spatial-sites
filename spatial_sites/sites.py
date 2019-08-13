@@ -977,21 +977,20 @@ class Sites(object):
         self.__iadd__(vector)
 
     def index(self, bool_arr=None, **label_values):
-        """Filter site indices by a bool array or a label with a particular
-        value.
+        """Get the indices of sites using a bool array or labels with particular values.
 
         Parameters
         ----------
         bool_arr : ndarray of bool of shape (len(self),), optional
             If specified, get the indices (of sites) where bool_arr is True.
         label_values : dict
-            label name and value to match
+            label names and values to match
 
         Returns
         -------
         match_idx : ndarray of int
-            Indices of sites that match the given condition (either a bool
-            array or a particular label value).
+            Indices of sites that match the given condition (either a bool array or a
+            particular label value).
 
         """
 
@@ -1018,7 +1017,7 @@ class Sites(object):
         return match_idx
 
     def where(self, bool_arr):
-        """Filter sites by a bool array."""
+        """Get coordinates indexed by a bool array."""
 
         match_idx = self.index(bool_arr)
         match_sites = self._coords[:, match_idx]
@@ -1029,7 +1028,7 @@ class Sites(object):
         return match_sites
 
     def whose(self, **label_values):
-        """Filter sites by a label with a particular value."""
+        """Get coordinates whose labels have a particular value."""
 
         match_idx = self.index(**label_values)
         match_sites = self._coords[:, match_idx]
