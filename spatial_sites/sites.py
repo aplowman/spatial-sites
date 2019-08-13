@@ -1319,6 +1319,12 @@ class Sites(object):
 
         return self
 
+    def snap_coords(self, vals, tol=1e-14):
+        'Snap coordinates values'
+
+        for i in vals:
+            self._coords[abs(self._coords - i) < tol] = i
+
 class SingleSite(Sites):
     """A single, labelled point in space."""
 
