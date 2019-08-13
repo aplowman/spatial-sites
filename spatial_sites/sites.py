@@ -1543,3 +1543,12 @@ class FilteredSites(Sites):
 
         self._single_sites = [i for idx, i in enumerate(sites_obj._single_sites)
                               if keep_arr[idx]]
+
+    def transform(self, mat):
+
+        mat = self._validate_transformation_matrix(mat)
+        if self.vector_direction == 'row':
+            mat = mat.T
+
+        operate_arr = np.logical_not(np.all(self._coords.mask, axis=0))
+        self._coords[:, operate_arr] = mat @ self._coords[:, operate_arr]
