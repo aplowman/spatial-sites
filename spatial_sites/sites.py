@@ -1196,7 +1196,7 @@ class Sites(object):
             raise ValueError(msg.format(rep_labs))
 
         # Merge coordinates
-        base_coords = self._coords.reshape((-1, self.dimension, 1))
+        base_coords = self._coords.T.reshape((-1, self.dimension, 1))
         tile_coords = other_sites._coords
         new_coords = np.hstack(base_coords + tile_coords)
 
