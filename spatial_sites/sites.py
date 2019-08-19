@@ -715,15 +715,17 @@ class Sites(object):
         if not isinstance(vector, np.ndarray):
             vector = np.array(vector)
 
-        if len(vector.shape) > 1:
-            vector = np.squeeze(vector)
-
-        if vector.shape != (self.dimension, ):
-            msg = ('Cannot translate coordinates with dimension {} by a '
-                   'vector with shape {}.')
-            raise ValueError(msg.format(self.dimension, vector.shape))
-
-        return vector[:, None]
+        if vector.shape == self.coords.shape:
+            return vector
+        else:
+            if len(vector.shape) > 1:
+                vector = np.squeeze(vector)
+            if vector.shape == (self.dimension, ):
+                return vector[:, None]
+            else:
+                msg = ('Cannot translate coordinates with shape {} by an '
+                       'array with shape {}.')
+                raise ValueError(msg.format(self.coords.shape, vector.shape))
 
     def _validate_transformation_matrix(self, mat):
         """Try to validate the shape of the matrix, as intended to transform
