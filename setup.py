@@ -46,7 +46,7 @@ setup(
         'Github': 'https://github.com/aplowman/spatial-sites',
     },
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Topic :: Scientific/Engineering :: Physics',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
