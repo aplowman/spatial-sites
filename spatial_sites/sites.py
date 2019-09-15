@@ -16,6 +16,19 @@ from spatial_sites.utils import check_indices, cast_arr_to_float, repr_dict
 REPR_INDENT = 4
 
 
+def refresh_visual(func):
+    def func_wrapper(*args, **kwargs):
+        # print('in decorator due to func: {}!'.format(func))
+        out = func(*args, **kwargs)
+        sites_obj = args[0]
+        if isinstance(sites_obj, FilteredSites):
+            sites_obj = sites_obj.sites
+        for i in sites_obj.parent_visual_handlers:
+            i(sites_obj)
+        return out
+    return func_wrapper
+
+
 def vector_direction_setter(obj, vector_direction, warn=True):
     """Set the `vector_direction` attribute of a given object.
 
@@ -150,13 +163,6 @@ class Labels(object):
 
         return True
 
-    def __copy__(self):
-        out = Labels(
-            name=self.name,
-            unique_values=np.copy(self.unique_values),
-            values_idx=np.copy(self.values_idx)
-        )
-        return out
 
     def _validate_name(self, name):
         """Ensure name is safe to use as an object attribute."""
@@ -250,6 +256,8 @@ class Sites(object):
         self._single_sites = [SingleSite(sites=self, site_index=i)
                               for i in range(len(self))]
 
+        self.parent_visual_handlers = []
+
     def __setattr__(self, name, value):
         """Overridden method to prevent reassigning label and component
         attributes."""
@@ -304,7 +312,7 @@ class Sites(object):
 
     def __len__(self):
         """Get how many coords there are in this Sites objects."""
-        return self._coords.shape[1]
+        return self.__coords.shape[1]
 
     def __getitem__(self, index):
         if isinstance(index, numbers.Integral):
@@ -379,17 +387,6 @@ class Sites(object):
         else:
             return self.coords >= other
 
-    def __copy__(self):
-        out = Sites(
-            coords=np.copy(self.coords),
-            vector_direction=self.vector_direction,
-            labels=copy.deepcopy(self.labels),
-            dimension=self.dimension,
-            component_labels=copy.copy(self.component_labels),
-            basis=np.copy(self.basis),
-        )
-        return out
-
     def __add__(self, obj):
 
         out = self.copy()
@@ -425,8 +422,8 @@ class Sites(object):
                 super().__setattr__(lab_name, sites_lab_new.values)
 
             new_sites = np.hstack([self._coords, obj._coords])
-            self._coords = new_sites
             self._labels = new_labs
+            self._coords = new_sites
 
         else:
             # Add a translation vector:
@@ -591,7 +588,7 @@ class Sites(object):
         """Called on instantiation to set coordinate attributes like e.g. `x`
         to the first coordinates component."""
 
-        if self._component_labels:
+        if hasattr(self, '_component_labels') and self._component_labels:
             for i in range(self.dimension):
                 if self._component_labels[i]:
                     super().__setattr__(self._component_labels[i], self.get_components(i))
@@ -838,6 +835,21 @@ class Sites(object):
         return self._dimension
 
     @property
+    def _coords(self):
+        return self.__coords
+
+    @_coords.setter
+    def _coords(self, _coords):
+
+        self.__coords = _coords
+        self._set_component_attrs()
+        try:
+            self._single_sites = [SingleSite(sites=self, site_index=i)
+                                  for i in range(len(self))]
+        except AttributeError:
+            pass
+
+    @property
     def coords(self):
         if self.vector_direction == 'column':
             return self._coords
@@ -857,7 +869,6 @@ class Sites(object):
 
         new_basis = self._validate_new_basis(new_basis)
         self._coords = self._get_coords(new_basis)
-        # TODO: need to update x, y, z, ... attributes?!? Do .x .y .z deviate from ._coords when I manipulate self._coords directly?
         self._basis = new_basis
 
     @property
@@ -977,8 +988,9 @@ class Sites(object):
 
     def copy(self):
         """Make a copy of the Sites object."""
-        return self.__copy__()
+        return copy.deepcopy(self)
 
+    @refresh_visual
     def translate(self, vector):
         """Translate the coordinates by a vector.
 
@@ -1116,12 +1128,13 @@ class Sites(object):
         'Remove sites based on an index array.'
         keep = np.ones(len(self), dtype=bool)
         keep[match_idx] = False
-        self._coords = self._coords[:, keep]
-        self._single_sites = [i for i, j in zip(self._single_sites, keep) if j]
 
         for label_name, sites_label in self.labels.items():
             sites_label.remove(match_idx)
             super().__setattr__(label_name, sites_label.values)
+
+        self._coords = self._coords[:, keep]
+        # self._single_sites = [i for i, j in zip(self._single_sites, keep) if j]
 
     def remove(self, bool_arr=None, inverse=False, label_match_mode='and', **label_values):
         'Remove sites based on a bool_arr or a label value.'
@@ -1416,6 +1429,14 @@ class SingleSite(Sites):
         self._labels = self._init_labels(sites._labels)
         self._vector_direction = sites.vector_direction
 
+    @property
+    def _coords(self):
+        return self.__coords
+
+    @_coords.setter
+    def _coords(self, _coords):
+        self.__coords = _coords
+
     def __repr__(self):
 
         arg_fmt = ' ' * REPR_INDENT
@@ -1526,6 +1547,8 @@ class FilteredSites(Sites):
 
         keep_arr = sites_obj.index_arr(bool_arr, **label_values)
         keep_arr_tiled = np.tile(keep_arr, (sites_obj.dimension, 1))
+        self.sites = sites_obj
+        self._keep_arr = keep_arr
 
         self.vector_direction = sites_obj.vector_direction
         self._coords = np.ma.array(sites_obj._coords, mask=~keep_arr_tiled)
@@ -1546,11 +1569,32 @@ class FilteredSites(Sites):
         self._single_sites = [i for idx, i in enumerate(sites_obj._single_sites)
                               if keep_arr[idx]]
 
+        self.parent_visual_handlers = sites_obj.parent_visual_handlers
+
+    @property
+    def _coords(self):
+        return self.__coords
+
+    @_coords.setter
+    def _coords(self, _coords):
+        self.__coords = _coords
+
     def transform(self, mat):
+
+        if not np.any(self._keep_arr):
+            return
 
         mat = self._validate_transformation_matrix(mat)
         if self.vector_direction == 'row':
             mat = mat.T
 
         operate_arr = np.logical_not(np.all(self._coords.mask, axis=0))
-        self._coords[:, operate_arr] = mat @ self._coords[:, operate_arr]
+
+        self._coords[:, operate_arr] = mat @ self._coords[:, operate_arr].data
+
+    def translate(self, vector):
+
+        if not np.any(self._keep_arr):
+            return
+
+        super().translate(vector)
